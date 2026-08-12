@@ -1,0 +1,550 @@
+/* BOOST — витрина финансовых продуктов.
+   Каталог, поиск, фильтр по категориям, сортировка и мини-подбор.
+   Данные лежат в data.js (window.SITE_DATA) и правятся через панель управления. */
+(function () {
+  "use strict";
+
+  var DATA = window.SITE_DATA || { offers: [], cats: [] };
+  var OFFERS = Array.isArray(DATA.offers) ? DATA.offers : [];
+  var CATS = Array.isArray(DATA.cats) && DATA.cats.length
+    ? DATA.cats
+    : [{ id: "other", name: "Предложения" }];
+
+  var reduceMotion = window.matchMedia
+    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    : false;
+
+  /* ————————————————— мелкие помощники ————————————————— */
+
+  function el(id) { return document.getElementById(id); }
+
+  function plural(n, one, few, many) {
+    var a = n % 10, b = n % 100;
+    if (a === 1 && b !== 11) return one;
+    if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return few;
+    return many;
+  }
+
+  function catName(id) {
+    for (var i = 0; i < CATS.length; i++) if (CATS[i].id === id) return CATS[i].name;
+    return "Предложение";
+  }
+
+  /* Числа вытаскиваем прямо из подписей: в панели управления клиент пишет
+     обычным текстом («до 100 000 ₽»), а сортировке нужно число. */
+  function numberFrom(text) {
+    var s = String(text || "").replace(/[\s ]/g, "").replace(",", ".");
+    var m = s.match(/\d+(?:\.\d+)?/);
+    return m ? parseFloat(m[0]) : null;
+  }
+
+  function specValue(offer, re) {
+    var specs = offer.specs || [];
+    for (var i = 0; i < specs.length; i++) {
+      if (re.test(String(specs[i][0]))) return String(specs[i][1]);
+    }
+    return "";
+  }
+
+  function amountOf(offer) {
+    if (offer._amount !== undefined) return offer._amount;
+    var raw = specValue(offer, /сумм|лимит|покрыт/i);
+    offer._amount = numberFrom(raw);
+    return offer._amount;
+  }
+
+  /* Ставку приводим к годовой, иначе «0,8% в день» выглядит выгоднее «19,9% годовых». */
+  function rateOf(offer) {
+    if (offer._rate !== undefined) return offer._rate;
+    var raw = specValue(offer, /ставк|процент/i);
+    var n = numberFrom(raw);
+    if (n !== null && /в\s*день|ежеднев/i.test(raw)) n = n * 365;
+    offer._rate = n;
+    return offer._rate;
+  }
+
+  function haystack(offer) {
+    if (offer._hay) return offer._hay;
+    var parts = [offer.brand, offer.title, offer.desc, offer.badge, catName(offer.cat)];
+    (offer.specs || []).forEach(function (p) { parts.push(p[0], p[1]); });
+    offer._hay = parts.join(" ").toLowerCase();
+    return offer._hay;
+  }
+
+  /* ————————————————— состояние ————————————————— */
+
+  var state = { q: "", cat: "all", sort: "default", minAmount: 0 };
+
+  /* ————————————————— карточка ————————————————— */
+
+  function buildCard(offer, index) {
+    var li = document.createElement("li");
+    li.className = "offer";
+
+    var card = document.createElement("article");
+    card.className = "card";
+
+    /* — шапка карточки — */
+    var top = document.createElement("div");
+    top.className = "card__top";
+
+    var num = document.createElement("span");
+    num.className = "card__num mono";
+    num.setAttribute("aria-hidden", "true");
+    num.textContent = ("0" + (index + 1)).slice(-2);
+
+    var cat = document.createElement("p");
+    cat.className = "card__cat mono";
+    cat.textContent = catName(offer.cat);
+
+    top.appendChild(num);
+    top.appendChild(cat);
+
+    if (offer.badge) {
+      var badge = document.createElement("p");
+      badge.className = "card__badge";
+      badge.textContent = offer.badge;
+      top.appendChild(badge);
+    }
+    card.appendChild(top);
+
+    /* — название — */
+    var h3 = document.createElement("h3");
+    h3.className = "card__brand";
+    h3.appendChild(document.createTextNode(offer.brand || "Предложение"));
+    if (offer.title) {
+      var sub = document.createElement("span");
+      sub.className = "card__title";
+      sub.textContent = offer.title;
+      h3.appendChild(sub);
+    }
+    card.appendChild(h3);
+
+    if (offer.desc) {
+      var desc = document.createElement("p");
+      desc.className = "card__desc";
+      desc.textContent = offer.desc;
+      card.appendChild(desc);
+    }
+
+    /* — параметры — */
+    var specs = offer.specs || [];
+    if (specs.length) {
+      var dl = document.createElement("dl");
+      dl.className = "specs";
+      specs.slice(0, 6).forEach(function (pair) {
+        if (!pair || (!pair[0] && !pair[1])) return;
+        var row = document.createElement("div");
+        row.className = "spec";
+        var dt = document.createElement("dt");
+        dt.textContent = pair[0];
+        var dd = document.createElement("dd");
+        dd.textContent = pair[1];
+        row.appendChild(dt);
+        row.appendChild(dd);
+        dl.appendChild(row);
+      });
+      card.appendChild(dl);
+    }
+
+    /* — действие — */
+    var foot = document.createElement("div");
+    foot.className = "card__foot";
+
+    var a = document.createElement("a");
+    a.className = "btn btn--primary card__cta";
+    a.href = offer.url || "#";
+    a.target = "_blank";
+    a.rel = "noopener nofollow sponsored";
+    a.appendChild(document.createTextNode("Оформить"));
+
+    /* Ссылок на странице много, и все они называются «Оформить».
+       Скринридеру дописываем, что именно оформляется и куда ведёт ссылка. */
+    var vh = document.createElement("span");
+    vh.className = "visually-hidden";
+    vh.textContent = " — " + (offer.brand || "предложение") +
+      (offer.title ? ", " + offer.title : "") + " (на сайте партнёра, в новой вкладке)";
+    a.appendChild(vh);
+
+    var arrow = document.createElement("span");
+    arrow.className = "btn__arrow";
+    arrow.setAttribute("aria-hidden", "true");
+    arrow.textContent = "↗";
+    a.appendChild(arrow);
+
+    var note = document.createElement("p");
+    note.className = "card__note mono";
+    note.textContent = "Заявка на сайте компании";
+
+    foot.appendChild(a);
+    foot.appendChild(note);
+    card.appendChild(foot);
+
+    li.appendChild(card);
+    return li;
+  }
+
+  /* ————————————————— выборка ————————————————— */
+
+  function visibleOffers() {
+    var q = state.q.trim().toLowerCase();
+    var list = OFFERS.filter(function (o) {
+      if (state.cat !== "all" && o.cat !== state.cat) return false;
+      if (state.minAmount) {
+        var a = amountOf(o);
+        if (a !== null && a < state.minAmount) return false;
+      }
+      if (q && haystack(o).indexOf(q) === -1) return false;
+      return true;
+    });
+
+    if (state.sort === "amount") {
+      list.sort(function (x, y) {
+        var a = amountOf(x), b = amountOf(y);
+        if (a === null && b === null) return 0;
+        if (a === null) return 1;
+        if (b === null) return -1;
+        return b - a;
+      });
+    } else if (state.sort === "rate") {
+      list.sort(function (x, y) {
+        var a = rateOf(x), b = rateOf(y);
+        if (a === null && b === null) return 0;
+        if (a === null) return 1;
+        if (b === null) return -1;
+        return a - b;
+      });
+    } else if (state.sort === "name") {
+      list.sort(function (x, y) {
+        return String(x.brand || "").localeCompare(String(y.brand || ""), "ru");
+      });
+    }
+    return list;
+  }
+
+  /* ————————————————— отрисовка ————————————————— */
+
+  var listEl    = el("offers-list");
+  var emptyEl   = el("empty-state");
+  var counterEl = el("counter");
+  var statusEl  = el("sr-status");
+  var statusT   = null;
+
+  function announce(text) {
+    if (!statusEl) return;
+    clearTimeout(statusT);
+    statusEl.textContent = "";
+    statusT = setTimeout(function () { statusEl.textContent = text; }, 150);
+  }
+
+  function render(opts) {
+    var list = visibleOffers();
+    listEl.textContent = "";
+    var frag = document.createDocumentFragment();
+    list.forEach(function (o, i) { frag.appendChild(buildCard(o, i)); });
+    listEl.appendChild(frag);
+
+    var phrase = list.length
+      ? "Найдено " + list.length + " " + plural(list.length, "предложение", "предложения", "предложений")
+      : "Ничего не нашлось";
+    counterEl.textContent = phrase;
+    emptyEl.hidden = list.length !== 0;
+
+    if (!opts || opts.announce !== false) announce(phrase);
+    reveal();
+  }
+
+  /* ————————————————— проявление карточек ————————————————— */
+
+  var io = null;
+  function reveal() {
+    var items = listEl.querySelectorAll(".offer");
+    if (reduceMotion || !("IntersectionObserver" in window)) {
+      Array.prototype.forEach.call(items, function (n) { n.classList.add("is-in"); });
+      return;
+    }
+    if (!io) {
+      io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); }
+        });
+      }, { rootMargin: "0px 0px -40px 0px" });
+    }
+    Array.prototype.forEach.call(items, function (n, i) {
+      n.style.setProperty("--i", String(Math.min(i, 8)));
+      io.observe(n);
+    });
+    /* Подстраховка: если наблюдатель почему-то не сработал (страница
+       отрисована в фоновой вкладке), через секунду показываем всё. */
+    setTimeout(function () {
+      Array.prototype.forEach.call(items, function (n) { n.classList.add("is-in"); });
+    }, 1200);
+  }
+
+  /* Секции проявляются так же, но их мало — обходимся одним наблюдателем. */
+  function revealSections() {
+    var nodes = document.querySelectorAll("[data-reveal]");
+    if (reduceMotion || !("IntersectionObserver" in window)) {
+      Array.prototype.forEach.call(nodes, function (n) { n.classList.add("is-in"); });
+      return;
+    }
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("is-in"); obs.unobserve(e.target); }
+      });
+    }, { rootMargin: "0px 0px -60px 0px" });
+    Array.prototype.forEach.call(nodes, function (n) { obs.observe(n); });
+    setTimeout(function () {
+      Array.prototype.forEach.call(nodes, function (n) { n.classList.add("is-in"); });
+    }, 1500);
+  }
+
+  /* ————————————————— фильтры ————————————————— */
+
+  var chipsBox = el("chips");
+
+  function buildChips() {
+    if (!chipsBox) return;
+    var frag = document.createDocumentFragment();
+
+    function chip(id, value, label, checked) {
+      var input = document.createElement("input");
+      input.className = "chips__input visually-hidden";
+      input.type = "radio";
+      input.name = "cat";
+      input.id = id;
+      input.value = value;
+      if (checked) input.checked = true;
+
+      var lab = document.createElement("label");
+      lab.className = "chip";
+      lab.setAttribute("for", id);
+      var mark = document.createElement("span");
+      mark.className = "chip__mark";
+      mark.setAttribute("aria-hidden", "true");
+      lab.appendChild(mark);
+      lab.appendChild(document.createTextNode(label));
+
+      var n = value === "all"
+        ? OFFERS.length
+        : OFFERS.filter(function (o) { return o.cat === value; }).length;
+      var cnt = document.createElement("span");
+      cnt.className = "chip__count mono";
+      cnt.setAttribute("aria-hidden", "true");
+      cnt.textContent = String(n);
+      lab.appendChild(cnt);
+
+      frag.appendChild(input);
+      frag.appendChild(lab);
+    }
+
+    chip("cat-all", "all", "Все", true);
+    CATS.forEach(function (c) {
+      var n = OFFERS.filter(function (o) { return o.cat === c.id; }).length;
+      if (!n) return;                       // пустые категории в фильтре не показываем
+      chip("cat-" + c.id, c.id, c.name, false);
+    });
+    chipsBox.appendChild(frag);
+  }
+
+  function bindFilters() {
+    var q = el("q");
+    if (q) {
+      var qT = null;
+      q.addEventListener("input", function () {
+        state.q = q.value;
+        clearTimeout(qT);
+        qT = setTimeout(function () { render(); }, 180);
+      });
+      /* Enter в поле поиска не должен перезагружать страницу. */
+      q.form && q.form.addEventListener("submit", function (e) { e.preventDefault(); });
+    }
+
+    if (chipsBox) {
+      chipsBox.addEventListener("change", function (e) {
+        if (e.target && e.target.name === "cat") {
+          state.cat = e.target.value;
+          render();
+        }
+      });
+    }
+
+    var sort = el("sort");
+    if (sort) {
+      sort.addEventListener("change", function () {
+        state.sort = sort.value;
+        render();
+      });
+    }
+
+    var reset = el("btn-reset-filters");
+    if (reset) {
+      reset.addEventListener("click", function () {
+        state.q = ""; state.cat = "all"; state.sort = "default"; state.minAmount = 0;
+        if (el("q")) el("q").value = "";
+        if (el("cat-all")) el("cat-all").checked = true;
+        if (el("sort")) el("sort").value = "default";
+        render();
+        var h = el("results-heading");
+        if (h) h.focus();
+      });
+    }
+  }
+
+  /* ————————————————— подбор ————————————————— */
+
+  /* Квиз ничего не выдумывает: он просто выставляет те же фильтры,
+     что пользователь мог бы выставить руками. */
+  function bindQuiz() {
+    var form = el("quiz");
+    if (!form) return;
+
+    var GOAL = {
+      short: { cats: ["mfo"],       sort: "default" },
+      big:   { cats: ["loan"],      sort: "amount"  },
+      card:  { cats: ["credit"],    sort: "default" },
+      daily: { cats: ["debit"],     sort: "default" },
+      ins:   { cats: ["insurance"], sort: "default" }
+    };
+    var AMOUNT = { any: 0, s: 0, m: 30000, l: 100000 };
+    var SORT = { fast: "default", cheap: "rate", bonus: "amount" };
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var goal   = (form.querySelector('input[name="goal"]:checked')   || {}).value || "short";
+      var amount = (form.querySelector('input[name="amount"]:checked') || {}).value || "any";
+      var pref   = (form.querySelector('input[name="pref"]:checked')   || {}).value || "fast";
+
+      var rule = GOAL[goal] || GOAL.short;
+      var wanted = rule.cats[0];
+      /* Если такой категории в каталоге нет (клиент переименовал её в панели) —
+         не прячем всё подряд, а показываем полный список. */
+      var exists = OFFERS.some(function (o) { return o.cat === wanted; });
+      state.cat = exists ? wanted : "all";
+      state.minAmount = AMOUNT[amount] || 0;
+      state.sort = SORT[pref] || rule.sort;
+      state.q = "";
+
+      var input = el("cat-" + state.cat) || el("cat-all");
+      if (input) input.checked = true;
+      if (el("q")) el("q").value = "";
+      if (el("sort")) el("sort").value = state.sort;
+
+      /* Если под жёсткий фильтр по сумме ничего не попало — ослабляем его,
+         чтобы человек не упёрся в пустой экран. */
+      render({ announce: false });
+      if (!visibleOffers().length && state.minAmount) {
+        state.minAmount = 0;
+        render({ announce: false });
+      }
+
+      var n = visibleOffers().length;
+      announce("Подобрали " + n + " " + plural(n, "предложение", "предложения", "предложений") +
+               ". Список ниже обновлён.");
+
+      var head = el("results-heading");
+      if (head) {
+        head.focus();
+        head.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      }
+    });
+  }
+
+  /* ————————————————— счётчики в шапке ————————————————— */
+
+  /* Считаем по таймеру, а не по requestAnimationFrame: во встроенных
+     превью и фоновых вкладках кадры не идут и число замирает на нуле. */
+  function countUp(node, target) {
+    if (reduceMotion || target <= 0) { node.textContent = String(target); return; }
+    var steps = 24, i = 0;
+    node.textContent = "0";
+    var t = setInterval(function () {
+      i++;
+      var v = Math.round(target * (1 - Math.pow(1 - i / steps, 3)));
+      node.textContent = String(v);
+      if (i >= steps) { clearInterval(t); node.textContent = String(target); }
+    }, 28);
+  }
+
+  function fillStats() {
+    var total = OFFERS.length;
+    var cats = CATS.filter(function (c) {
+      return OFFERS.some(function (o) { return o.cat === c.id; });
+    }).length;
+
+    var n1 = el("stat-offers");
+    var n2 = el("stat-cats");
+    if (n1) countUp(n1, total);
+    if (n2) countUp(n2, cats);
+
+    var heroCount = el("hero-count");
+    if (heroCount) heroCount.textContent = String(total);
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-updated]"), function (n) {
+      n.textContent = DATA.updated || "";
+    });
+
+    var word = el("offers-word");
+    if (word) word.textContent = plural(total, "предложение", "предложения", "предложений");
+  }
+
+  /* ————————————————— бегущая строка ————————————————— */
+
+  /* Строка крутится дольше пяти секунд, поэтому её обязательно надо уметь
+     останавливать. Кнопка живёт вне aria-hidden-обёртки. */
+  function bindTicker() {
+    var ticker = el("ticker");
+    var stop = el("ticker-stop");
+    if (!ticker || !stop) return;
+
+    if (reduceMotion) { ticker.classList.add("is-paused"); }
+
+    function sync() {
+      var paused = ticker.classList.contains("is-paused");
+      stop.setAttribute("aria-pressed", String(paused));
+      stop.querySelector(".visually-hidden").textContent =
+        paused ? "Запустить бегущую строку" : "Остановить бегущую строку";
+      stop.querySelector(".ticker__stop-icon").textContent = paused ? "▶" : "❙❙";
+    }
+    sync();
+
+    stop.addEventListener("click", function () {
+      ticker.classList.toggle("is-paused");
+      sync();
+    });
+  }
+
+  /* ————————————————— шапка на скролле ————————————————— */
+
+  function bindHeader() {
+    var head = document.querySelector(".site-head");
+    if (!head) return;
+    var last = -1;
+    function onScroll() {
+      var y = window.pageYOffset || document.documentElement.scrollTop;
+      var on = y > 24;
+      if (on !== last) { head.classList.toggle("is-stuck", on); last = on; }
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  }
+
+  /* ————————————————— старт ————————————————— */
+
+  function init() {
+    buildChips();
+    bindFilters();
+    bindQuiz();
+    fillStats();
+    bindTicker();
+    bindHeader();
+    render({ announce: false });
+    revealSections();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Вход в панель управления — BOOST</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23101114'/><path d='M9 21L21 9M21 9h-8.5M21 9v8.5' stroke='%23e4472a' stroke-width='3' fill='none'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css?v=1">
+<link rel="stylesheet" href="assets/admin.css?v=1">
+</head>
+<body class="admin">
+
+<!-- ————————————— ВХОД ————————————— -->
+<div id="login-view" class="login-wrap">
+  <div class="login">
+    <span class="login__mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="20" height="20" focusable="false" aria-hidden="true">
+        <path d="M5 19L19 5M19 5h-9.5M19 5v9.5" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="square"/>
+      </svg>
+    </span>
+
+    <h1>Панель управления</h1>
+    <p class="login__sub">Каталог BOOST. Введите пароль, чтобы редактировать предложения и категории.</p>
+
+    <form id="login-form" novalidate>
+      <div class="field-row">
+        <label for="pwd">Пароль</label>
+        <div class="pwd-wrap">
+          <input id="pwd" name="password" type="password" autocomplete="current-password" required
+                 autocapitalize="off" spellcheck="false" aria-describedby="pwd-hint">
+          <button class="btn btn--small" type="button" id="pwd-toggle" aria-pressed="false" aria-controls="pwd">
+            Показать<span class="visually-hidden"> пароль</span>
+          </button>
+        </div>
+        <p class="hint" id="pwd-hint">Пароль выдаёт разработчик сайта. Его можно поменять в файле config.php.</p>
+        <p class="hint" id="mode-note" hidden></p>
+      </div>
+
+      <button class="btn btn--primary btn--block" type="submit">Войти</button>
+
+      <div id="login-alert" role="alert" aria-atomic="true">
+        <div class="alert__body" hidden>
+          <p id="login-alert-text"></p>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ————————————— РАБОЧАЯ ОБЛАСТЬ ————————————— -->
+<div id="app-view" hidden>
+
+  <header class="admin-head">
+    <div class="wrap admin-head__in">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18" focusable="false" aria-hidden="true">
+          <path d="M5 19L19 5M19 5h-9.5M19 5v9.5" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="square"/>
+        </svg>
+      </span>
+      <p class="admin-head__title">BOOST</p>
+      <p class="admin-head__sub">панель управления</p>
+      <div class="admin-head__actions">
+        <a class="btn btn--onDark btn--small" href="index.html" target="_blank" rel="noopener">
+          Открыть сайт<span class="visually-hidden"> (в новой вкладке)</span>
+        </a>
+        <button class="btn btn--onDark btn--small" type="button" id="btn-logout">Выйти</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-main" id="admin-main" tabindex="-1">
+    <div class="wrap">
+
+      <div class="admin-bar">
+        <h1 id="admin-h1" tabindex="-1">Каталог</h1>
+        <p class="mono" id="rows-count">28 позиций</p>
+        <span class="admin-bar__spacer"></span>
+        <p class="saved-mark" id="saved-mark"></p>
+        <button class="btn btn--primary" type="button" id="btn-save">Сохранить и опубликовать</button>
+      </div>
+
+      <div class="howto">
+        <h2>Как это работает</h2>
+        <ol>
+          <li>Меняете тексты, ссылки и категории ниже, жмёте <strong>«Сохранить и опубликовать»</strong> — правки сразу видны посетителям.</li>
+          <li><strong>«Резервная копия»</strong> скачивает каталог себе на компьютер, <strong>«Выгрузить data.js»</strong> — файл для ручной заливки на хостинг.</li>
+          <li>Если панель открыта не с сайта, а файлом с диска, правки сохраняются только внутри браузера — тогда выгрузите <code>data.js</code> и залейте его сами.</li>
+        </ol>
+      </div>
+
+      <div id="admin-alert" role="alert" aria-atomic="true">
+        <div class="alert__body" hidden>
+          <p id="admin-alert-text"></p>
+          <button class="btn btn--small" type="button" id="admin-alert-close">Закрыть</button>
+        </div>
+      </div>
+
+      <!-- ——— категории ——— -->
+      <section aria-labelledby="cats-heading">
+        <div class="admin-bar">
+          <h2 id="cats-heading">Категории</h2>
+          <span class="admin-bar__spacer"></span>
+          <button class="btn btn--small" type="button" id="btn-add-cat">+ Добавить категорию</button>
+        </div>
+        <p class="hint" style="margin-top:12px">
+          Порядок категорий здесь = порядок кнопок фильтра на сайте.
+          Пустая категория на сайте не показывается. Удалить можно только категорию без предложений.
+        </p>
+        <div class="cats" id="cats"></div>
+      </section>
+
+      <!-- ——— предложения ——— -->
+      <section aria-labelledby="offers-heading">
+        <div class="admin-bar">
+          <h2 id="offers-heading" tabindex="-1">Предложения</h2>
+          <span class="admin-bar__spacer"></span>
+          <button class="btn btn--small" type="button" id="btn-add">+ Добавить предложение</button>
+        </div>
+        <div class="rows" id="rows"></div>
+      </section>
+
+      <!-- ——— файлы ——— -->
+      <section aria-labelledby="files-heading">
+        <div class="admin-bar" style="margin-top:26px">
+          <h2 id="files-heading">Файлы и резервные копии</h2>
+        </div>
+        <div class="admin-bar" style="border-bottom:0">
+          <button class="btn btn--small" type="button" id="btn-export-js">Выгрузить data.js</button>
+          <button class="btn btn--small" type="button" id="btn-export-json">Резервная копия (JSON)</button>
+          <span style="display:inline-flex;align-items:center;gap:10px">
+            <label class="btn btn--small" for="import-file">Загрузить копию</label>
+            <input class="visually-hidden" type="file" id="import-file" accept="application/json,.json">
+          </span>
+          <span class="admin-bar__spacer"></span>
+          <button class="btn btn--small btn--danger" type="button" id="btn-reset">Вернуть каталог из файла</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<div id="sr-status" role="status" aria-live="polite" aria-atomic="true" class="visually-hidden"></div>
+
+<dialog id="confirm-dialog" role="alertdialog" aria-modal="true"
+        aria-labelledby="confirm-title" aria-describedby="confirm-text">
+  <h2 id="confirm-title">Удалить предложение?</h2>
+  <p id="confirm-text">Позиция исчезнет из списка.</p>
+  <form method="dialog" class="dialog__actions">
+    <button class="btn" type="submit" value="cancel" id="confirm-cancel">Отмена</button>
+    <button class="btn btn--danger" type="submit" value="ok" id="confirm-ok">Удалить</button>
+  </form>
+</dialog>
+
+<script src="data.js?v=1"></script>
+<script src="assets/admin.js?v=1"></script>
+</body>
+</html>
