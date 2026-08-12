@@ -39,6 +39,18 @@
     return "#dfeee4";
   }
 
+  /* Плитки категорий залиты пастелью, а точка рядом с названием в карточке
+     должна быть заметной — берём тот же цвет и притемняем. */
+  function darken(hex, k) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ""));
+    if (!m) return "#117a4d";
+    var n = parseInt(m[1], 16);
+    var r = Math.round(((n >> 16) & 255) * k);
+    var g = Math.round(((n >> 8) & 255) * k);
+    var b = Math.round((n & 255) * k);
+    return "rgb(" + r + "," + g + "," + b + ")";
+  }
+
   function countIn(catId) {
     return OFFERS.filter(function (o) { return o.cat === catId; }).length;
   }
@@ -102,16 +114,15 @@
     var top = document.createElement("div");
     top.className = "card__top";
 
-    var num = document.createElement("span");
-    num.className = "card__num mono";
-    num.setAttribute("aria-hidden", "true");
-    num.textContent = ("0" + (index + 1)).slice(-2);
-
     var cat = document.createElement("p");
-    cat.className = "card__cat mono";
-    cat.textContent = catName(offer.cat);
+    cat.className = "card__cat";
+    var dot = document.createElement("span");
+    dot.className = "card__dot";
+    dot.setAttribute("aria-hidden", "true");
+    dot.style.background = darken(catTint(offer.cat), .52);
+    cat.appendChild(dot);
+    cat.appendChild(document.createTextNode(catName(offer.cat)));
 
-    top.appendChild(num);
     top.appendChild(cat);
 
     if (offer.badge) {
@@ -213,14 +224,8 @@
       (offer.title ? ", " + offer.title : "") + " (на сайте партнёра, в новой вкладке)";
     a.appendChild(vh);
 
-    var arrow = document.createElement("span");
-    arrow.className = "btn__arrow";
-    arrow.setAttribute("aria-hidden", "true");
-    arrow.textContent = "↗";
-    a.appendChild(arrow);
-
     var note = document.createElement("p");
-    note.className = "card__note mono";
+    note.className = "card__note";
     note.textContent = "Заявка на сайте компании";
 
     foot.appendChild(a);
@@ -372,11 +377,11 @@
       lab.appendChild(mark);
       lab.appendChild(document.createTextNode(label));
 
-      if (value !== "all") mark.style.background = catTint(value);
+      if (value !== "all") mark.style.background = darken(catTint(value), .52);
 
       var n = value === "all" ? OFFERS.length : countIn(value);
       var cnt = document.createElement("span");
-      cnt.className = "chip__count mono";
+      cnt.className = "chip__count";
       cnt.setAttribute("aria-hidden", "true");
       cnt.textContent = String(n);
       lab.appendChild(cnt);
@@ -611,32 +616,6 @@
     if (word) word.textContent = plural(total, "предложение", "предложения", "предложений");
   }
 
-  /* ————————————————— бегущая строка ————————————————— */
-
-  /* Строка крутится дольше пяти секунд, поэтому её обязательно надо уметь
-     останавливать. Кнопка живёт вне aria-hidden-обёртки. */
-  function bindTicker() {
-    var ticker = el("ticker");
-    var stop = el("ticker-stop");
-    if (!ticker || !stop) return;
-
-    if (reduceMotion) { ticker.classList.add("is-paused"); }
-
-    function sync() {
-      var paused = ticker.classList.contains("is-paused");
-      stop.setAttribute("aria-pressed", String(paused));
-      stop.querySelector(".visually-hidden").textContent =
-        paused ? "Запустить бегущую строку" : "Остановить бегущую строку";
-      stop.querySelector(".ticker__stop-icon").textContent = paused ? "▶" : "❙❙";
-    }
-    sync();
-
-    stop.addEventListener("click", function () {
-      ticker.classList.toggle("is-paused");
-      sync();
-    });
-  }
-
   /* ————————————————— шапка на скролле ————————————————— */
 
   function bindHeader() {
@@ -660,7 +639,6 @@
     bindFilters();
     bindQuiz();
     fillStats();
-    bindTicker();
     bindHeader();
     render({ announce: false });
     revealSections();

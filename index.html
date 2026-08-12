@@ -7,51 +7,40 @@
 <script>document.documentElement.className += " js";</script>
 <title>Каталог финансовых продуктов — BOOST: карты, займы, кредиты и страхование</title>
 <meta name="description" content="BOOST — каталог финансовых продуктов: кредитные и дебетовые карты, микрозаймы, кредиты наличными и страховые полисы. Условия собраны в одном месте, заявка оформляется на сайте компании.">
-<meta name="theme-color" content="#f7f6f3">
+<meta name="theme-color" content="#fbfbfa">
 <meta property="og:title" content="BOOST — каталог финансовых продуктов">
 <meta property="og:description" content="Карты, займы, кредиты и страхование. Условия в одном списке, подбор за три вопроса.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23101114'/><path d='M9 21L21 9M21 9h-8.5M21 9v8.5' stroke='%23e4472a' stroke-width='3' fill='none'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23117a4d'/><path d='M10 21L21 10M21 10h-8M21 10v8' stroke='%23fff' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Шрифты не держат первую отрисовку: страница показывается сразу системной
-     гарнитурой и переключается, когда файлы доедут. Начертания — только нужные. -->
+<!-- Шрифт не держит первую отрисовку: страница показывается сразу системной
+     гарнитурой и переключается, когда файл доедет. -->
 <link rel="stylesheet" media="print" onload="this.media='all'"
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 <noscript>
   <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 </noscript>
 
-<link rel="stylesheet" href="assets/style.css?v=2">
+<link rel="stylesheet" href="assets/style.css?v=3">
 </head>
 <body>
 
 <a class="skip-link" href="#main">Перейти к каталогу</a>
 
-<!-- ————————————— техническая полоса ————————————— -->
-<div class="topbar">
-  <div class="wrap topbar__in">
-    <p class="mono topbar__code">RU · 2026</p>
-    <p class="mono topbar__mid">Каталог финансовых продуктов · обновлён <span data-updated>12.08.2026</span></p>
-    <p class="mono topbar__code topbar__code--r">Реклама · 18+</p>
-  </div>
-</div>
-
 <header class="site-head">
   <div class="wrap site-head__in">
     <a class="brand" href="#main">
       <span class="brand__mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="18" height="18" focusable="false" aria-hidden="true">
-          <path d="M5 19L19 5M19 5h-9.5M19 5v9.5" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="square"/>
+        <svg viewBox="0 0 24 24" width="16" height="16" focusable="false" aria-hidden="true">
+          <path d="M6 18L18 6M18 6h-9M18 6v9" stroke="currentColor" stroke-width="2.4" fill="none"
+                stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </span>
-      <span class="brand__text">
-        <span class="brand__name">BOOST</span>
-        <span class="brand__sub">подбор финансовых продуктов</span>
-      </span>
+      <span class="brand__name">Boost</span>
     </a>
 
     <nav class="mainnav" aria-label="Разделы сайта">
@@ -63,10 +52,7 @@
       </ul>
     </nav>
 
-    <a class="head-cta" href="#catalog">
-      <span>Смотреть каталог</span>
-      <span class="btn__arrow" aria-hidden="true">↗</span>
-    </a>
+    <a class="btn btn--primary btn--sm head-cta" href="#catalog">Смотреть каталог</a>
   </div>
 </header>
 
@@ -77,84 +63,92 @@
     <div class="wrap hero__in">
 
       <div class="hero__main">
-        <p class="mono hero__kicker">
-          <span class="dot" aria-hidden="true"></span>
-          Каталог · <span id="hero-count">28</span>&nbsp;<span id="offers-word">предложений</span> · 5&nbsp;категорий
+        <p class="pill pill--soft">
+          <span class="pill__dot" aria-hidden="true"></span>
+          <span><span id="hero-count">28</span> <span id="offers-word">предложений</span> в каталоге</span>
         </p>
 
         <h1 class="hero__title">
-          <span class="hero__line">Карты, займы</span>
-          <span class="hero__line">и кредиты —</span>
-          <span class="hero__line hero__line--accent">в одном списке<span class="hero__arrow" aria-hidden="true">↗</span></span>
+          Карты, займы и кредиты<br>
+          <span class="accent">в одном списке</span>
         </h1>
 
         <p class="hero__lead">
-          Собрали условия банков, микрофинансовых и страховых компаний в один каталог:
-          лимиты, ставки, сроки и кэшбэк видно сразу. Сравниваете здесь — заявку
-          оформляете на официальном сайте компании.
+          Условия банков, микрофинансовых и страховых компаний собраны в один каталог —
+          лимиты, ставки и кэшбэк видно сразу. Сравниваете здесь, заявку оформляете
+          на сайте компании.
         </p>
 
         <div class="hero__actions">
-          <a class="btn btn--primary" href="#pick">
-            Подобрать за 3 вопроса<span class="btn__arrow" aria-hidden="true">↓</span>
-          </a>
-          <a class="btn btn--ghost" href="#catalog">Открыть весь каталог</a>
+          <a class="btn btn--primary" href="#pick">Подобрать за 3 вопроса</a>
+          <a class="btn btn--quiet" href="#catalog">Открыть весь каталог</a>
         </div>
-      </div>
 
-      <aside class="hero__panel" aria-label="Коротко о каталоге">
-        <dl class="stats">
-          <div class="stat">
-            <dt class="mono">Предложений</dt>
+        <dl class="hero__stats">
+          <div>
+            <dt>Предложений</dt>
             <dd>
-              <span class="stat__num" id="stat-offers" aria-hidden="true">28</span>
+              <span class="num" id="stat-offers" aria-hidden="true">28</span>
               <span class="visually-hidden">28 предложений в каталоге</span>
             </dd>
           </div>
-          <div class="stat">
-            <dt class="mono">Категорий</dt>
+          <div>
+            <dt>Категорий</dt>
             <dd>
-              <span class="stat__num" id="stat-cats" aria-hidden="true">5</span>
+              <span class="num" id="stat-cats" aria-hidden="true">5</span>
               <span class="visually-hidden">5 категорий</span>
             </dd>
           </div>
-          <div class="stat">
-            <dt class="mono">Оформление</dt>
-            <dd><span class="stat__word">Онлайн</span></dd>
+          <div>
+            <dt>Оформление</dt>
+            <dd><span class="num num--word">Онлайн</span></dd>
           </div>
-          <div class="stat">
-            <dt class="mono">Стоимость</dt>
-            <dd><span class="stat__word">0 ₽</span></dd>
+          <div>
+            <dt>Стоимость</dt>
+            <dd><span class="num num--word">0 ₽</span></dd>
           </div>
         </dl>
-        <p class="hero__panel-note">
-          Сервис бесплатный: сравнение и переход по ссылке ничего не стоят и ни к чему не обязывают.
-        </p>
-      </aside>
-
-    </div>
-
-    <!-- бегущая строка: декоративная, с кнопкой остановки рядом -->
-    <div class="tickerbar">
-      <div class="ticker" id="ticker" aria-hidden="true">
-        <div class="ticker__track">
-          <span>Микрозаймы&nbsp;✦&nbsp;Кредитные карты&nbsp;✦&nbsp;Дебетовые карты&nbsp;✦&nbsp;Кредиты наличными&nbsp;✦&nbsp;Страхование&nbsp;✦&nbsp;Онлайн-заявка&nbsp;✦&nbsp;Решение за минуты&nbsp;✦&nbsp;</span>
-          <span>Микрозаймы&nbsp;✦&nbsp;Кредитные карты&nbsp;✦&nbsp;Дебетовые карты&nbsp;✦&nbsp;Кредиты наличными&nbsp;✦&nbsp;Страхование&nbsp;✦&nbsp;Онлайн-заявка&nbsp;✦&nbsp;Решение за минуты&nbsp;✦&nbsp;</span>
-        </div>
       </div>
-      <button class="ticker__stop" type="button" id="ticker-stop" aria-pressed="false">
-        <span class="ticker__stop-icon" aria-hidden="true">❙❙</span>
-        <span class="visually-hidden">Остановить бегущую строку</span>
-      </button>
+
+      <!-- Декоративная витрина: показывает, как выглядит карточка в каталоге.
+           Для скринридера скрыта — ниже те же данные есть в настоящем каталоге. -->
+      <div class="hero__art" aria-hidden="true">
+        <div class="orb orb--1"></div>
+        <div class="orb orb--2"></div>
+
+        <div class="mock mock--back">
+          <div class="mock__row">
+            <span class="mock__logo"><img src="assets/logos/zaymer.ru.png" alt="" width="26" height="26"></span>
+            <span class="mock__name">Займер<em>Займ на карту</em></span>
+          </div>
+          <div class="mock__line"><span>Сумма</span><b>до 100 000 ₽</b></div>
+          <div class="mock__line"><span>Ставка</span><b>от 0%</b></div>
+        </div>
+
+        <div class="mock mock--front">
+          <div class="mock__row">
+            <span class="mock__logo"><img src="assets/logos/tbank.ru.png" alt="" width="26" height="26"></span>
+            <span class="mock__name">Т-Банк<em>Кредитная карта</em></span>
+            <span class="mock__badge">0%</span>
+          </div>
+          <div class="mock__line"><span>Лимит</span><b>до 1 000 000 ₽</b></div>
+          <div class="mock__line"><span>Льготный период</span><b>до 55 дней</b></div>
+          <div class="mock__line"><span>Обслуживание</span><b>0 ₽</b></div>
+          <div class="mock__btn">Оформить</div>
+        </div>
+
+        <div class="mock__chip">Решение за 2 минуты</div>
+      </div>
+
     </div>
   </section>
 
-  <!-- ————————————— ПЛИТКИ КАТЕГОРИЙ ————————————— -->
+  <!-- ————————————— КАТЕГОРИИ ————————————— -->
   <section class="cats-strip" aria-labelledby="cats-heading">
     <div class="wrap">
-      <div class="cats-strip__head">
-        <h2 id="cats-heading" class="section-title" style="margin:0">Выберите категорию</h2>
-        <p class="mono">Нажмите — каталог отфильтруется</p>
+      <div class="sec-head">
+        <h2 id="cats-heading">Категории</h2>
+        <p class="muted">Нажмите — каталог отфильтруется</p>
       </div>
       <ul class="cat-tiles" id="cat-tiles" role="list">
         <!-- плитки строит app.js по списку категорий из data.js -->
@@ -165,55 +159,56 @@
   <!-- ————————————— ПОДБОР ————————————— -->
   <section id="pick" class="pick" aria-labelledby="pick-heading" data-reveal>
     <div class="wrap">
-      <p class="mono section-tag">01 — Подбор</p>
-      <h2 id="pick-heading" class="section-title">Три вопроса — и <em>список сузится</em></h2>
-      <p class="section-lead">
-        Ответы просто выставляют фильтры каталога: категорию, сумму и порядок сортировки.
-        Ничего не отправляется и никуда не уходит — данные остаются в браузере.
-      </p>
-
-      <form id="quiz" class="quiz" novalidate>
-        <div class="quiz__grid">
-
-          <fieldset class="quiz__step">
-            <legend><span class="mono quiz__num">01</span> Что нужно?</legend>
-            <div class="opts">
-              <label class="opt"><input type="radio" name="goal" value="short" checked><span>Деньги на короткий срок</span></label>
-              <label class="opt"><input type="radio" name="goal" value="big"><span>Кредит на крупную сумму</span></label>
-              <label class="opt"><input type="radio" name="goal" value="card"><span>Карта для покупок в долг</span></label>
-              <label class="opt"><input type="radio" name="goal" value="daily"><span>Карта для повседневных трат</span></label>
-              <label class="opt"><input type="radio" name="goal" value="ins"><span>Страховой полис</span></label>
-            </div>
-          </fieldset>
-
-          <fieldset class="quiz__step">
-            <legend><span class="mono quiz__num">02</span> Какая сумма?</legend>
-            <div class="opts">
-              <label class="opt"><input type="radio" name="amount" value="any" checked><span>Не важно</span></label>
-              <label class="opt"><input type="radio" name="amount" value="m"><span>От 30 000 ₽</span></label>
-              <label class="opt"><input type="radio" name="amount" value="l"><span>От 100 000 ₽</span></label>
-            </div>
-            <p class="quiz__hint">Для карт и полисов сумма учитывается как лимит или покрытие.</p>
-          </fieldset>
-
-          <fieldset class="quiz__step">
-            <legend><span class="mono quiz__num">03</span> Что важнее?</legend>
-            <div class="opts">
-              <label class="opt"><input type="radio" name="pref" value="fast" checked><span>Скорость решения</span></label>
-              <label class="opt"><input type="radio" name="pref" value="cheap"><span>Ставка пониже</span></label>
-              <label class="opt"><input type="radio" name="pref" value="bonus"><span>Сумма побольше</span></label>
-            </div>
-          </fieldset>
-
+      <div class="pick__box">
+        <div class="pick__intro">
+          <h2 id="pick-heading">Три вопроса — и список сузится</h2>
+          <p>
+            Ответы просто выставляют фильтры каталога: категорию, сумму и порядок сортировки.
+            Ничего не отправляется и никуда не уходит.
+          </p>
         </div>
 
-        <div class="quiz__foot">
-          <button class="btn btn--primary" type="submit">
-            Показать подходящее<span class="btn__arrow" aria-hidden="true">↓</span>
-          </button>
-          <p class="quiz__note mono">Без регистрации, без звонков, без передачи данных третьим лицам</p>
-        </div>
-      </form>
+        <form id="quiz" class="quiz" novalidate>
+          <div class="quiz__grid">
+
+            <fieldset class="quiz__step">
+              <legend>Что нужно?</legend>
+              <div class="opts">
+                <label class="opt"><input type="radio" name="goal" value="short" checked><span>Деньги на короткий срок</span></label>
+                <label class="opt"><input type="radio" name="goal" value="big"><span>Кредит на крупную сумму</span></label>
+                <label class="opt"><input type="radio" name="goal" value="card"><span>Карта для покупок в долг</span></label>
+                <label class="opt"><input type="radio" name="goal" value="daily"><span>Карта на каждый день</span></label>
+                <label class="opt"><input type="radio" name="goal" value="ins"><span>Страховой полис</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="quiz__step">
+              <legend>Какая сумма?</legend>
+              <div class="opts">
+                <label class="opt"><input type="radio" name="amount" value="any" checked><span>Не важно</span></label>
+                <label class="opt"><input type="radio" name="amount" value="m"><span>От 30 000 ₽</span></label>
+                <label class="opt"><input type="radio" name="amount" value="l"><span>От 100 000 ₽</span></label>
+              </div>
+              <p class="quiz__hint">Для карт и полисов сумма считается как лимит или покрытие.</p>
+            </fieldset>
+
+            <fieldset class="quiz__step">
+              <legend>Что важнее?</legend>
+              <div class="opts">
+                <label class="opt"><input type="radio" name="pref" value="fast" checked><span>Скорость решения</span></label>
+                <label class="opt"><input type="radio" name="pref" value="cheap"><span>Ставка пониже</span></label>
+                <label class="opt"><input type="radio" name="pref" value="bonus"><span>Сумма побольше</span></label>
+              </div>
+            </fieldset>
+
+          </div>
+
+          <div class="quiz__foot">
+            <button class="btn btn--light" type="submit">Показать подходящее</button>
+            <p class="quiz__note">Без регистрации и звонков</p>
+          </div>
+        </form>
+      </div>
     </div>
   </section>
 
@@ -227,15 +222,15 @@
         <span class="field__icon" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 16 16" focusable="false" aria-hidden="true">
             <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.7" fill="none"/>
-            <path d="M11 11l4 4" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M11 11l4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
           </svg>
         </span>
-        <input type="search" id="q" name="q" autocomplete="off" placeholder="Например: кэшбэк, ВТБ, ОСАГО">
+        <input type="search" id="q" name="q" autocomplete="off" placeholder="Кэшбэк, ВТБ, ОСАГО…">
       </div>
 
       <fieldset class="chips" id="chips">
         <legend class="visually-hidden">Категория</legend>
-        <!-- кнопки категорий строит app.js по списку из data.js -->
+        <!-- кнопки категорий строит app.js -->
       </fieldset>
 
       <div class="sortbox">
@@ -254,18 +249,10 @@
   <!-- ————————————— КАТАЛОГ ————————————— -->
   <section id="catalog" class="catalog" aria-labelledby="results-heading">
     <div class="wrap">
-      <div class="catalog__head">
-        <div>
-          <p class="mono section-tag">02 — Каталог</p>
-          <h2 id="results-heading" class="section-title" tabindex="-1">Финансовые продукты</h2>
-        </div>
-        <p class="mono counter" id="counter">Найдено 28 предложений</p>
+      <div class="sec-head">
+        <h2 id="results-heading" tabindex="-1">Финансовые продукты</h2>
+        <p class="muted" id="counter">Найдено 28 предложений</p>
       </div>
-
-      <p class="affiliate-note">
-        Ссылки ведут на официальные сайты компаний и открываются в новой вкладке.
-        Условия могут меняться — итоговые цифры смотрите на сайте компании. Реклама.
-      </p>
 
       <div id="sr-status" role="status" aria-live="polite" aria-atomic="true" class="visually-hidden"></div>
 
@@ -273,20 +260,26 @@
 
       <div id="empty-state" class="empty" hidden>
         <p><strong>Ничего не нашлось.</strong> Попробуйте другое слово или снимите фильтры.</p>
-        <button class="btn btn--ghost" type="button" id="btn-reset-filters">Сбросить фильтры</button>
+        <button class="btn btn--quiet" type="button" id="btn-reset-filters">Сбросить фильтры</button>
       </div>
+
+      <p class="affiliate-note">
+        Ссылки ведут на официальные сайты компаний и открываются в новой вкладке.
+        Условия могут меняться — итоговые цифры смотрите на сайте компании. Реклама.
+      </p>
     </div>
   </section>
 
   <!-- ————————————— КАК ОФОРМИТЬ ————————————— -->
   <section id="how" class="how" aria-labelledby="how-heading" data-reveal>
     <div class="wrap">
-      <p class="mono section-tag">03 — Порядок</p>
-      <h2 id="how-heading" class="section-title">Как оформить продукт</h2>
+      <div class="sec-head">
+        <h2 id="how-heading">Как оформить</h2>
+      </div>
       <ol class="steps">
         <li>
           <h3>Выберите продукт</h3>
-          <p>Сравните лимит, ставку, срок и кэшбэк. Фильтр и подбор сузят каталог до нужной категории.</p>
+          <p>Сравните лимит, ставку, срок и кэшбэк. Подбор и фильтр сузят каталог до нужной категории.</p>
         </li>
         <li>
           <h3>Заполните заявку</h3>
@@ -294,37 +287,34 @@
         </li>
         <li>
           <h3>Получите решение</h3>
-          <p>Банк, МФО или страховая рассматривают заявку сами. При одобрении деньги приходят на счёт, карта — курьером, полис — на почту.</p>
+          <p>Компания рассматривает заявку сама. При одобрении деньги приходят на счёт, карта — курьером, полис — на почту.</p>
         </li>
       </ol>
     </div>
   </section>
 
-  <!-- ————————————— ПОЧЕМУ ТАК УДОБНЕЕ ————————————— -->
+  <!-- ————————————— О СЕРВИСЕ ————————————— -->
   <section class="why" aria-labelledby="why-heading" data-reveal>
     <div class="wrap">
-      <p class="mono section-tag">04 — О сервисе</p>
-      <h2 id="why-heading" class="section-title">Зачем сравнивать здесь</h2>
+      <div class="sec-head">
+        <h2 id="why-heading">Зачем сравнивать здесь</h2>
+      </div>
       <ul class="why__list" role="list">
         <li>
-          <span class="why__num" aria-hidden="true">01</span>
-          <h3>Условия рядом, а не по вкладкам</h3>
-          <p>Лимит, ставка, срок и стоимость обслуживания в одном формате — видно разницу без переключения между сайтами.</p>
+          <h3>Условия рядом</h3>
+          <p>Лимит, ставка, срок и обслуживание в одном формате — разница видна без переключения между сайтами.</p>
         </li>
         <li>
-          <span class="why__num" aria-hidden="true">02</span>
           <h3>Пять категорий сразу</h3>
-          <p>Займы, кредитные и дебетовые карты, кредиты наличными и страхование. Не нужно искать отдельный агрегатор под каждую задачу.</p>
+          <p>Займы, кредитные и дебетовые карты, кредиты наличными и страхование. Отдельный агрегатор под каждую задачу не нужен.</p>
         </li>
         <li>
-          <span class="why__num" aria-hidden="true">03</span>
           <h3>Ничего не спрашиваем</h3>
-          <p>Ни телефона, ни почты, ни анкеты. Подбор работает прямо в браузере, заявка заполняется уже у компании.</p>
+          <p>Ни телефона, ни почты, ни анкеты. Подбор работает в браузере, заявка заполняется уже у компании.</p>
         </li>
         <li>
-          <span class="why__num" aria-hidden="true">04</span>
           <h3>Каталог живой</h3>
-          <p>Список обновляется вручную по мере изменения тарифов. Дата последнего обновления — <span data-updated>12.08.2026</span>.</p>
+          <p>Список обновляется по мере изменения тарифов. Последнее обновление — <span data-updated>12.08.2026</span>.</p>
         </li>
       </ul>
     </div>
@@ -333,20 +323,21 @@
   <!-- ————————————— FAQ ————————————— -->
   <section id="faq" class="faq" aria-labelledby="faq-heading" data-reveal>
     <div class="wrap">
-      <p class="mono section-tag">05 — Вопросы</p>
-      <h2 id="faq-heading" class="section-title">Что спрашивают чаще всего</h2>
+      <div class="sec-head">
+        <h2 id="faq-heading">Частые вопросы</h2>
+      </div>
 
       <div class="faq__list">
         <details name="faq">
           <summary><h3>Это банк или посредник?</h3></summary>
           <div class="faq__body">
-            <p>Ни то, ни другое. BOOST — информационная витрина: мы собираем условия компаний в удобном виде. Договор вы заключаете напрямую с банком, МФО или страховой, деньги и полис приходят от них же.</p>
+            <p>Ни то, ни другое. Boost — информационная витрина: мы собираем условия компаний в удобном виде. Договор вы заключаете напрямую с банком, МФО или страховой, деньги и полис приходят от них же.</p>
           </div>
         </details>
         <details name="faq">
           <summary><h3>Сколько стоит подбор?</h3></summary>
           <div class="faq__body">
-            <p>Нисколько. Для посетителя всё бесплатно: переход по ссылке ничего не стоит и ни к чему не обязывает. Сайт зарабатывает на партнёрских отчислениях компаний — на условия для вас это не влияет.</p>
+            <p>Нисколько. Переход по ссылке ничего не стоит и ни к чему не обязывает. Сайт зарабатывает на партнёрских отчислениях компаний — на ваши условия это не влияет.</p>
           </div>
         </details>
         <details name="faq">
@@ -358,17 +349,17 @@
         <details name="faq">
           <summary><h3>Какие нужны документы?</h3></summary>
           <div class="faq__body">
-            <p>Для микрозайма — паспорт РФ и банковская карта на ваше имя. Для карт банка могут дополнительно запросить СНИЛС или ИНН. Для ОСАГО — паспорт, права и свидетельство о регистрации автомобиля.</p>
+            <p>Для микрозайма — паспорт РФ и банковская карта на ваше имя. Для карт банка могут запросить СНИЛС или ИНН. Для ОСАГО — паспорт, права и свидетельство о регистрации автомобиля.</p>
           </div>
         </details>
         <details name="faq">
-          <summary><h3>Насколько актуальны цифры в каталоге?</h3></summary>
+          <summary><h3>Насколько актуальны цифры?</h3></summary>
           <div class="faq__body">
             <p>Каталог обновляется вручную, а компании меняют тарифы. Итоговые ставка, лимит и срок всегда указаны на сайте компании — сверяйтесь с ними перед подписанием договора.</p>
           </div>
         </details>
         <details name="faq">
-          <summary><h3>Можно ли подать несколько заявок сразу?</h3></summary>
+          <summary><h3>Можно подать несколько заявок сразу?</h3></summary>
           <div class="faq__body">
             <p>Технически да, но частые обращения подряд видны в кредитной истории и могут снизить шансы на одобрение. Разумнее выбрать два-три подходящих предложения и подавать заявки по очереди.</p>
           </div>
@@ -382,16 +373,17 @@
 <footer class="site-foot">
   <div class="wrap">
     <h2 class="visually-hidden">Правовая информация и разделы сайта</h2>
-    <div class="foot__grid">
-      <div class="foot__brand">
-        <span class="brand__mark brand__mark--foot" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="18" height="18" focusable="false" aria-hidden="true">
-            <path d="M5 19L19 5M19 5h-9.5M19 5v9.5" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="square"/>
+
+    <div class="foot__top">
+      <a class="brand brand--foot" href="#main">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" focusable="false" aria-hidden="true">
+            <path d="M6 18L18 6M18 6h-9M18 6v9" stroke="currentColor" stroke-width="2.4" fill="none"
+                  stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </span>
-        <p class="foot__name">BOOST</p>
-        <p class="mono foot__sub">Каталог финансовых продуктов<br>Выпуск 2026</p>
-      </div>
+        <span class="brand__name">Boost</span>
+      </a>
 
       <nav class="foot__nav" aria-label="Ссылки в подвале">
         <ul>
@@ -401,21 +393,21 @@
           <li><a href="#faq">Вопросы</a></li>
         </ul>
       </nav>
+    </div>
 
-      <div class="foot__legal">
-        <p>Сайт носит информационный характер, не является публичной офертой, кредитной организацией, микрофинансовой организацией или страховым агентом. Услуги оказывают компании-партнёры на условиях, размещённых на их официальных сайтах.</p>
-        <p>Заём и кредит предоставляются совершеннолетним гражданам РФ. Оцените свою долговую нагрузку до подписания договора: деньги придётся возвращать с процентами. Реклама, 18+.</p>
-      </div>
+    <div class="foot__legal">
+      <p>Сайт носит информационный характер, не является публичной офертой, кредитной организацией, микрофинансовой организацией или страховым агентом. Услуги оказывают компании-партнёры на условиях, размещённых на их официальных сайтах.</p>
+      <p>Заём и кредит предоставляются совершеннолетним гражданам РФ. Оцените долговую нагрузку до подписания договора. Реклама, 18+.</p>
     </div>
 
     <div class="foot__bottom">
-      <p class="mono">© 2026 BOOST</p>
-      <p class="mono">Обновлено <span data-updated>12.08.2026</span></p>
+      <p>© 2026 Boost</p>
+      <p>Обновлено <span data-updated>12.08.2026</span></p>
     </div>
   </div>
 </footer>
 
-<script src="data.js?v=2"></script>
-<script src="assets/app.js?v=2"></script>
+<script src="data.js?v=3"></script>
+<script src="assets/app.js?v=3"></script>
 </body>
 </html>
