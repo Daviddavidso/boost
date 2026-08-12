@@ -30,6 +30,19 @@
     return "Предложение";
   }
 
+  /* Цвет категории — только оформление: название всегда написано словами,
+     поэтому смысл не теряется, если цвет не виден. */
+  function catTint(id) {
+    for (var i = 0; i < CATS.length; i++) {
+      if (CATS[i].id === id && CATS[i].tint) return CATS[i].tint;
+    }
+    return "#dfeee4";
+  }
+
+  function countIn(catId) {
+    return OFFERS.filter(function (o) { return o.cat === catId; }).length;
+  }
+
   /* Числа вытаскиваем прямо из подписей: в панели управления клиент пишет
      обычным текстом («до 100 000 ₽»), а сортировке нужно число. */
   function numberFrom(text) {
@@ -83,6 +96,7 @@
 
     var card = document.createElement("article");
     card.className = "card";
+    card.style.setProperty("--tint", catTint(offer.cat));
 
     /* — шапка карточки — */
     var top = document.createElement("div");
@@ -108,7 +122,39 @@
     }
     card.appendChild(top);
 
-    /* — название — */
+    var body = document.createElement("div");
+    body.className = "card__body";
+    card.appendChild(body);
+
+    /* — логотип и название — */
+    var idRow = document.createElement("div");
+    idRow.className = "card__id";
+
+    var logoBox = document.createElement("span");
+    if (offer.logo) {
+      /* Логотип декоративный: название компании стоит рядом заголовком,
+         второй раз проговаривать его скринридеру незачем. */
+      logoBox.className = "card__logo";
+      var img = document.createElement("img");
+      img.src = offer.logo;
+      img.alt = "";
+      img.width = 34;
+      img.height = 34;
+      img.loading = "lazy";
+      /* если файл не доехал — вместо битой картинки монограмма */
+      img.addEventListener("error", function () {
+        logoBox.textContent = (offer.brand || "?").trim().charAt(0).toUpperCase();
+        logoBox.className = "card__logo card__logo--letter";
+        logoBox.setAttribute("aria-hidden", "true");
+      });
+      logoBox.appendChild(img);
+    } else {
+      logoBox.className = "card__logo card__logo--letter";
+      logoBox.setAttribute("aria-hidden", "true");
+      logoBox.textContent = (offer.brand || "?").trim().charAt(0).toUpperCase();
+    }
+    idRow.appendChild(logoBox);
+
     var h3 = document.createElement("h3");
     h3.className = "card__brand";
     h3.appendChild(document.createTextNode(offer.brand || "Предложение"));
@@ -118,13 +164,14 @@
       sub.textContent = offer.title;
       h3.appendChild(sub);
     }
-    card.appendChild(h3);
+    idRow.appendChild(h3);
+    body.appendChild(idRow);
 
     if (offer.desc) {
       var desc = document.createElement("p");
       desc.className = "card__desc";
       desc.textContent = offer.desc;
-      card.appendChild(desc);
+      body.appendChild(desc);
     }
 
     /* — параметры — */
@@ -144,7 +191,7 @@
         row.appendChild(dd);
         dl.appendChild(row);
       });
-      card.appendChild(dl);
+      body.appendChild(dl);
     }
 
     /* — действие — */
@@ -178,7 +225,7 @@
 
     foot.appendChild(a);
     foot.appendChild(note);
-    card.appendChild(foot);
+    body.appendChild(foot);
 
     li.appendChild(card);
     return li;
@@ -283,7 +330,7 @@
 
   /* Секции проявляются так же, но их мало — обходимся одним наблюдателем. */
   function revealSections() {
-    var nodes = document.querySelectorAll("[data-reveal]");
+    var nodes = document.querySelectorAll("[data-reveal], .cat-tile-wrap");
     if (reduceMotion || !("IntersectionObserver" in window)) {
       Array.prototype.forEach.call(nodes, function (n) { n.classList.add("is-in"); });
       return;
@@ -325,9 +372,9 @@
       lab.appendChild(mark);
       lab.appendChild(document.createTextNode(label));
 
-      var n = value === "all"
-        ? OFFERS.length
-        : OFFERS.filter(function (o) { return o.cat === value; }).length;
+      if (value !== "all") mark.style.background = catTint(value);
+
+      var n = value === "all" ? OFFERS.length : countIn(value);
       var cnt = document.createElement("span");
       cnt.className = "chip__count mono";
       cnt.setAttribute("aria-hidden", "true");
@@ -340,11 +387,87 @@
 
     chip("cat-all", "all", "Все", true);
     CATS.forEach(function (c) {
-      var n = OFFERS.filter(function (o) { return o.cat === c.id; }).length;
-      if (!n) return;                       // пустые категории в фильтре не показываем
+      if (!countIn(c.id)) return;           // пустые категории в фильтре не показываем
       chip("cat-" + c.id, c.id, c.name, false);
     });
     chipsBox.appendChild(frag);
+  }
+
+  /* ————————————————— плитки категорий ————————————————— */
+
+  /* Плитка делает ровно то же, что кнопка фильтра: переключает категорию
+     и уводит к каталогу. Поэтому это button, а не ссылка. */
+  function buildTiles() {
+    var box = el("cat-tiles");
+    if (!box) return;
+    var frag = document.createDocumentFragment();
+
+    CATS.forEach(function (c, i) {
+      var n = countIn(c.id);
+      if (!n) return;
+
+      var li = document.createElement("li");
+      li.className = "cat-tile-wrap";
+      li.style.setProperty("--i", String(i));
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cat-tile";
+      btn.style.background = c.tint || "#dfeee4";
+      btn.dataset.cat = c.id;
+
+      var num = document.createElement("span");
+      num.className = "cat-tile__num";
+      num.setAttribute("aria-hidden", "true");
+      num.textContent = String(n);
+
+      var word = document.createElement("span");
+      word.className = "cat-tile__word";
+      word.setAttribute("aria-hidden", "true");
+      word.textContent = plural(n, "предложение", "предложения", "предложений");
+
+      var name = document.createElement("span");
+      name.className = "cat-tile__name";
+      name.textContent = c.name;
+
+      /* Кнопке нужно осмысленное имя целиком, а не «12 Микрозаймы». */
+      var vh = document.createElement("span");
+      vh.className = "visually-hidden";
+      vh.textContent = " — показать " + n + " " +
+        plural(n, "предложение", "предложения", "предложений");
+      name.appendChild(vh);
+
+      var go = document.createElement("span");
+      go.className = "cat-tile__go";
+      go.setAttribute("aria-hidden", "true");
+      go.textContent = "↗";
+
+      btn.appendChild(num);
+      btn.appendChild(word);
+      btn.appendChild(name);
+      btn.appendChild(go);
+      li.appendChild(btn);
+      frag.appendChild(li);
+    });
+
+    box.appendChild(frag);
+
+    box.addEventListener("click", function (e) {
+      var btn = e.target.closest(".cat-tile");
+      if (!btn) return;
+      state.cat = btn.dataset.cat;
+      state.q = "";
+      state.minAmount = 0;
+      var input = el("cat-" + state.cat);
+      if (input) input.checked = true;
+      if (el("q")) el("q").value = "";
+      render();
+      var head = el("results-heading");
+      if (head) {
+        head.focus();
+        head.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      }
+    });
   }
 
   function bindFilters() {
@@ -533,6 +656,7 @@
 
   function init() {
     buildChips();
+    buildTiles();
     bindFilters();
     bindQuiz();
     fillStats();

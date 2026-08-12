@@ -225,6 +225,23 @@
         refreshCatSelects();
       });
 
+      /* цвет плитки категории на сайте */
+      var colorId = "cat-tint-" + cat.id;
+      var colorLab = document.createElement("label");
+      colorLab.className = "visually-hidden";
+      colorLab.setAttribute("for", colorId);
+      colorLab.textContent = "Цвет плитки категории «" + (cat.name || cat.id) + "»";
+
+      var color = document.createElement("input");
+      color.type = "color";
+      color.id = colorId;
+      color.className = "cat-color";
+      color.value = cat.tint || "#dfeee4";
+      color.addEventListener("input", function () {
+        var c = data.cats.filter(function (x) { return x.id === cat.id; })[0];
+        if (c) c.tint = color.value;
+      });
+
       var idTag = document.createElement("span");
       idTag.className = "cat-id";
       idTag.textContent = cat.id;
@@ -246,6 +263,8 @@
 
       row.appendChild(lab);
       row.appendChild(input);
+      row.appendChild(colorLab);
+      row.appendChild(color);
       row.appendChild(idTag);
       row.appendChild(useTag);
       row.appendChild(tools);
@@ -321,7 +340,7 @@
 
   document.getElementById("btn-add-cat").addEventListener("click", function () {
     var id = uniqueCatId("novaya-kategoriya");
-    data.cats.push({ id: id, name: "Новая категория" });
+    data.cats.push({ id: id, name: "Новая категория", tint: "#dfeee4" });
     renderCats();
     refreshCatSelects();
     var row = catsEl.querySelectorAll(".cat-row")[data.cats.length - 1];
@@ -444,6 +463,8 @@
     grid.appendChild(field("Название компании", uid + "-brand", "text", offer.brand, uid));
     grid.appendChild(field("Подзаголовок (продукт)", uid + "-sub", "text", offer.title, uid));
     grid.appendChild(field("Плашка (необязательно)", uid + "-badge", "text", offer.badge, uid));
+    grid.appendChild(field("Логотип — путь к файлу, например assets/logos/tbank.ru.png",
+      uid + "-logo", "text", offer.logo, uid));
     grid.appendChild(field("Описание", uid + "-desc", "textarea", offer.desc, uid, "span2"));
     grid.appendChild(field("Параметры — по одному в строке, формат «Название | Значение»",
       uid + "-specs", "textarea", specsToText(offer.specs), uid, "span2"));
@@ -485,6 +506,7 @@
       o.brand = get("-brand").trim();
       o.title = get("-sub").trim();
       o.badge = get("-badge").trim();
+      o.logo  = get("-logo").trim();
       o.desc  = get("-desc").trim();
       o.url   = get("-url").trim();
       o.specs = textToSpecs(get("-specs"));

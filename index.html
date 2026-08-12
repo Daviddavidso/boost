@@ -25,7 +25,7 @@
         href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 </noscript>
 
-<link rel="stylesheet" href="assets/style.css?v=1">
+<link rel="stylesheet" href="assets/style.css?v=2">
 </head>
 <body>
 
@@ -149,11 +149,24 @@
     </div>
   </section>
 
+  <!-- ————————————— ПЛИТКИ КАТЕГОРИЙ ————————————— -->
+  <section class="cats-strip" aria-labelledby="cats-heading">
+    <div class="wrap">
+      <div class="cats-strip__head">
+        <h2 id="cats-heading" class="section-title" style="margin:0">Выберите категорию</h2>
+        <p class="mono">Нажмите — каталог отфильтруется</p>
+      </div>
+      <ul class="cat-tiles" id="cat-tiles" role="list">
+        <!-- плитки строит app.js по списку категорий из data.js -->
+      </ul>
+    </div>
+  </section>
+
   <!-- ————————————— ПОДБОР ————————————— -->
   <section id="pick" class="pick" aria-labelledby="pick-heading" data-reveal>
     <div class="wrap">
       <p class="mono section-tag">01 — Подбор</p>
-      <h2 id="pick-heading" class="section-title">Три вопроса — и список сузится</h2>
+      <h2 id="pick-heading" class="section-title">Три вопроса — и <em>список сузится</em></h2>
       <p class="section-lead">
         Ответы просто выставляют фильтры каталога: категорию, сумму и порядок сортировки.
         Ничего не отправляется и никуда не уходит — данные остаются в браузере.
@@ -294,18 +307,22 @@
       <h2 id="why-heading" class="section-title">Зачем сравнивать здесь</h2>
       <ul class="why__list" role="list">
         <li>
+          <span class="why__num" aria-hidden="true">01</span>
           <h3>Условия рядом, а не по вкладкам</h3>
           <p>Лимит, ставка, срок и стоимость обслуживания в одном формате — видно разницу без переключения между сайтами.</p>
         </li>
         <li>
+          <span class="why__num" aria-hidden="true">02</span>
           <h3>Пять категорий сразу</h3>
           <p>Займы, кредитные и дебетовые карты, кредиты наличными и страхование. Не нужно искать отдельный агрегатор под каждую задачу.</p>
         </li>
         <li>
+          <span class="why__num" aria-hidden="true">03</span>
           <h3>Ничего не спрашиваем</h3>
           <p>Ни телефона, ни почты, ни анкеты. Подбор работает прямо в браузере, заявка заполняется уже у компании.</p>
         </li>
         <li>
+          <span class="why__num" aria-hidden="true">04</span>
           <h3>Каталог живой</h3>
           <p>Список обновляется вручную по мере изменения тарифов. Дата последнего обновления — <span data-updated>12.08.2026</span>.</p>
         </li>
@@ -398,7 +415,7 @@
   </div>
 </footer>
 
-<script src="data.js?v=1"></script>
-<script src="assets/app.js?v=1"></script>
+<script src="data.js?v=2"></script>
+<script src="assets/app.js?v=2"></script>
 </body>
 </html>

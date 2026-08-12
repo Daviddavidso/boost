@@ -185,6 +185,17 @@ body.admin { background: var(--paper); }
   background: var(--paper);
   color: var(--ink);
 }
+.cat-row .cat-color {
+  flex: none;
+  width: 46px;
+  min-width: 46px;
+  height: 38px;
+  padding: 3px;
+  border: 1px solid var(--line-ctl);
+  border-radius: var(--r);
+  background: var(--paper-2);
+  cursor: pointer;
+}
 .cat-row .cat-id {
   font-family: var(--mono);
   font-size: 11px;
