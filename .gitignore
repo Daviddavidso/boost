@@ -1,4 +1,5 @@
-config.php
-.tokens
-data.backup.js
 .DS_Store
+.ftp.env
+.tokens
+config.php
+data.backup.js
