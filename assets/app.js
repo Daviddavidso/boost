@@ -5,6 +5,20 @@
   "use strict";
 
   var DATA = window.SITE_DATA || { offers: [], cats: [] };
+
+  /* Логотип может быть путём к файлу, data:-строкой или ссылкой "lib:имя"
+     на картинку из библиотеки админки (data.library). */
+  function logoSrc(logo) {
+    if (!logo) return "";
+    if (logo.indexOf("lib:") === 0) {
+      var lib = DATA.library || [];
+      for (var i = 0; i < lib.length; i++) {
+        if (lib[i].name === logo.slice(4)) return lib[i].data;
+      }
+      return "";
+    }
+    return logo;
+  }
   var OFFERS = Array.isArray(DATA.offers) ? DATA.offers : [];
   var CATS = Array.isArray(DATA.cats) && DATA.cats.length
     ? DATA.cats
@@ -142,12 +156,13 @@
     idRow.className = "card__id";
 
     var logoBox = document.createElement("span");
-    if (offer.logo) {
+    var logoUrl = logoSrc(offer.logo);
+    if (logoUrl) {
       /* Логотип декоративный: название компании стоит рядом заголовком,
          второй раз проговаривать его скринридеру незачем. */
       logoBox.className = "card__logo";
       var img = document.createElement("img");
-      img.src = offer.logo;
+      img.src = logoUrl;
       img.alt = "";
       img.width = 34;
       img.height = 34;
@@ -604,6 +619,12 @@
     var n2 = el("stat-cats");
     if (n1) countUp(n1, total);
     if (n2) countUp(n2, cats);
+
+    /* скрытые дубли для скринридеров — числа должны совпадать с видимыми */
+    if (n1 && n1.nextElementSibling) n1.nextElementSibling.textContent =
+      total + " " + plural(total, "предложение", "предложения", "предложений") + " в каталоге";
+    if (n2 && n2.nextElementSibling) n2.nextElementSibling.textContent =
+      cats + " " + plural(cats, "категория", "категории", "категорий");
 
     var heroCount = el("hero-count");
     if (heroCount) heroCount.textContent = String(total);

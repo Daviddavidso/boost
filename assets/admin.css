@@ -66,6 +66,35 @@ body.admin { background: var(--bg); }
 
 .hint { font-size: 13px; color: var(--muted); }
 
+/* ————————————— своя картинка ————————————— */
+
+.logo-up { display: flex; align-items: center; gap: 12px; }
+.logo-up input[type="file"] { flex: 1; min-width: 0; }
+.logo-thumb {
+  flex: none;
+  width: 48px; height: 48px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.logo-thumb img { max-width: 34px; max-height: 34px; }
+.uperr { font-size: 13px; font-weight: 600; color: #a52f18; }
+.uperr:empty { display: none; }
+
+/* библиотека картинок */
+.lib-label { margin-top: 10px; }
+.dl {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
 .btn--small { min-height: 40px; padding: 9px 18px; font-size: 14px; }
 .btn--danger { background: #fdecea; color: #a52f18; }
 .btn--danger:hover { background: #a52f18; color: #fff; }

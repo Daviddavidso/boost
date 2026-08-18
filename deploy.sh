@@ -66,9 +66,44 @@ fi
 # ——— весь сайт ———
 echo "Заливаю сайт в $FTP_DIR"
 
-for f in index.html admin.html data.js api.php .htaccess; do
+# Сначала выясняем, исполняется ли на хостинге PHP. Тариф Host-Lite его вообще
+# не даёт («Данному пользователю запрещено использовать PHP»), и тогда любой
+# .php отдаётся исходным текстом — config.php показал бы пароль от админки
+# всему интернету, а api.php просто светил бы код. Проверяем отдельным
+# пробником, а не самим api.php: его на статичном тарифе мы не заливаем.
+SITE_URL="${SITE_URL:-https://$(basename "${FTP_DIR%/}")}"
+PHP_LIVE=0
+PROBE="_phpcheck.php"
+TMP_PROBE="$(mktemp)"
+printf '<?php echo "PHP-OK"; ?>' > "$TMP_PROBE"
+if curl -sS --connect-timeout 20 --max-time 60 -T "$TMP_PROBE" \
+      "${BASE}${PROBE}" --user "$FTP_USER:$FTP_PASS" >/dev/null 2>&1; then
+  if curl -sS --max-time 20 "${SITE_URL}/${PROBE}" 2>/dev/null | grep -q '^PHP-OK'; then
+    PHP_LIVE=1
+  fi
+  curl -sS --max-time 30 -Q "DELE ${FTP_DIR%/}/${PROBE}" "$BASE" \
+       --user "$FTP_USER:$FTP_PASS" >/dev/null 2>&1
+fi
+rm -f "$TMP_PROBE"
+
+if [ "$PHP_LIVE" = "1" ]; then
+  echo "  · PHP на хостинге работает — заливаю бэкенд панели"
+else
+  echo "  ! PHP на хостинге НЕ работает (тариф без PHP)."
+  echo "    api.php и config.php не заливаю: первый светил бы код,"
+  echo "    второй — пароль от админки. Панель работает как черновик в браузере."
+fi
+
+for f in index.html data.js .htaccess; do
   put "$f" "$f"
 done
+
+[ "$PHP_LIVE" = "1" ] && put "api.php" "api.php"
+
+# Панель уезжает на сервер под именем panel.html: reg.ru заворачивает любой
+# путь со словом "admin" в антибот-проверку и /admin.html уходит в вечный
+# редирект (?attempt=1, ?attempt=2, …).
+put "admin.html" "panel.html"
 
 for f in assets/*.css assets/*.js; do
   [ -f "$f" ] && put "$f" "$f"
@@ -79,8 +114,8 @@ for f in assets/logos/*; do
 done
 
 # config.php собираем на лету: пароль от админки живёт в .ftp.env,
-# в репозиторий он не попадает.
-if [ -n "${ADMIN_PASS:-}" ]; then
+# в репозиторий он не попадает. Заливаем только если PHP жив (см. проверку выше).
+if [ -n "${ADMIN_PASS:-}" ] && [ "$PHP_LIVE" = "1" ]; then
   TMP_CFG="$(mktemp)"
   cat > "$TMP_CFG" <<PHP
 <?php
@@ -92,7 +127,7 @@ return [
 PHP
   put "$TMP_CFG" "config.php"
   rm -f "$TMP_CFG"
-else
+elif [ -z "${ADMIN_PASS:-}" ]; then
   echo "  · ADMIN_PASS не задан — config.php не трогаю"
 fi
 
@@ -104,6 +139,6 @@ chmod_remote "data.js" 664
 
 echo
 echo "Готово: $OK успешно, $FAIL с ошибкой"
-echo "Проверьте: сайт открывается, /admin.html пускает по паролю,"
-echo "а /config.php отдаёт 403."
+echo "Проверьте: сайт открывается, /panel.html пускает по паролю,"
+echo "а /config.php отдаёт 403 (или 404, если PHP выключен)."
 exit $(( FAIL > 0 ))

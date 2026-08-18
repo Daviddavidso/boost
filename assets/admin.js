@@ -11,6 +11,10 @@
   var TOKEN_KEY = "boost:token";
   var API       = "api.php";
 
+  /* Что показывается в поле «Логотип», когда вместо пути к файлу
+     в каталоге лежит загруженная картинка (data:-строка). */
+  var LOGO_MARK = "своя картинка (загружена)";
+
   var server = false;   // отвечает ли бэкенд
 
   function api(action, payload) {
@@ -60,6 +64,111 @@
       }
     } catch (e) { /* битый черновик игнорируем */ }
     return baseData();
+  }
+
+  /* ================= библиотека картинок ================= */
+
+  /* Загруженные картинки живут в data.library и уезжают в data.js вместе
+     с каталогом: картинку можно выбрать в любом предложении и скачать
+     обратно на диск — хранить её на ноуте не обязательно. */
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function libFind(name) {
+    var lib = (data && data.library) || [];
+    for (var i = 0; i < lib.length; i++) if (lib[i].name === name) return lib[i];
+    return null;
+  }
+
+  function logoSrc(logo) {
+    if (!logo) return "";
+    if (logo.indexOf("data:") === 0) return logo;
+    if (logo.indexOf("lib:") === 0) {
+      var it = libFind(logo.slice(4));
+      return it ? it.data : "";
+    }
+    return logo;   // обычный путь вида assets/logos/x.png
+  }
+
+  function extFromDataUrl(u) {
+    if (/^data:image\/jpe?g/.test(u)) return "jpg";
+    if (/^data:image\/svg/.test(u)) return "svg";
+    if (/^data:image\/webp/.test(u)) return "webp";
+    return "png";
+  }
+
+  /* Пункты селекта «Картинка из библиотеки». Селект всегда говорит правду:
+     пустой пункт выбран только когда картинки нет совсем, путь к файлу
+     показывается пунктом «файл: …», пропавшая запись — «(нет в библиотеке)». */
+  function libOptions(logo) {
+    var html = '<option value=""' + (!logo ? " selected" : "") + ">— без картинки —</option>";
+    var lib = (data && data.library) || [];
+    if (lib.length) {
+      html += '<optgroup label="Мои картинки">' + lib.map(function (it) {
+        var v = "lib:" + it.name;
+        return '<option value="' + esc(v) + '"' + (v === logo ? " selected" : "") + ">" +
+               esc(it.name) + "</option>";
+      }).join("") + "</optgroup>";
+    }
+    if (logo && logo.indexOf("lib:") === 0 && !libFind(logo.slice(4))) {
+      html += '<option value="' + esc(logo) + '" selected>' + esc(logo.slice(4)) + " (нет в библиотеке)</option>";
+    }
+    if (logo && logo.indexOf("lib:") !== 0 && logo.indexOf("data:") !== 0) {
+      html += '<option value="' + esc(logo) + '" selected>файл: ' + esc(logo.replace(/^.*\//, "")) + "</option>";
+    }
+    if (logo && logo.indexOf("data:") === 0) {
+      html += '<option value="' + esc(logo) + '" selected>' + LOGO_MARK + "</option>";
+    }
+    return html;
+  }
+
+  /* Ссылка «скачать текущую картинку»: href, имя файла и подпись меняются
+     только вместе — устаревшее имя при новой картинке хуже, чем ничего. */
+  function dlHTML(logo) {
+    var it = logo && logo.indexOf("lib:") === 0 ? libFind(logo.slice(4)) : null;
+    if (!it && logo && logo.indexOf("data:") === 0) {
+      it = { name: "картинка", ext: extFromDataUrl(logo), data: logo };
+    }
+    if (!it) return "";
+    var fname = it.name + "." + (it.ext || "png");
+    return '<a class="dl" download="' + esc(fname) + '" href="' + it.data + '">' +
+           'Скачать текущую картинку<span class="visually-hidden"> (' + esc(fname) + ")</span></a>";
+  }
+
+  /* Старые загрузки лежали data:-строкой прямо в предложении — переносим
+     в библиотеку, чтобы ими можно было пользоваться и в других карточках. */
+  function migrateLogos() {
+    data.library = Array.isArray(data.library) ? data.library : [];
+    var moved = 0;
+    (data.offers || []).forEach(function (o) {
+      if (o.logo && o.logo.indexOf("data:") === 0) {
+        var base = (o.brand || "").trim().slice(0, 40) || "картинка";
+        var name = base, n = 2;
+        while (libFind(name)) name = base + "-" + (n++);
+        data.library.push({ name: name, ext: extFromDataUrl(o.logo), data: o.logo });
+        o.logo = "lib:" + name;
+        moved++;
+      }
+    });
+    return moved;
+  }
+
+  /* Селекты всех строк узнают о новой картинке. Пересобираем только
+     пункты внутри живых селектов — сами узлы не трогаем, иначе слетит
+     фокус; текущее значение берём из поля пути, оно всегда актуально. */
+  function refreshLibSelects() {
+    Array.prototype.forEach.call(rowsEl.querySelectorAll("select[data-lib-select]"), function (sl) {
+      if (sl.contains(document.activeElement)) return;
+      var fs = sl.closest(".row");
+      var pathEl = fs && document.getElementById(fs.dataset.uid + "-logo");
+      var o = fs && data.offers.filter(function (x) { return x.uid === fs.dataset.uid; })[0];
+      var cur = pathEl && pathEl.value.trim() !== LOGO_MARK ? pathEl.value.trim() : (o ? o.logo : "");
+      sl.innerHTML = libOptions(cur);
+    });
   }
 
   /* ================= объявления и сообщения ================= */
@@ -158,8 +267,14 @@
     appView.hidden = false;
     document.title = "Каталог — панель управления BOOST";
     data = load();
-    renderCats();
-    renderRows();
+    if (migrateLogos()) {
+      renderCats();
+      renderRows();
+      say("Загруженные раньше картинки перенесены в библиотеку «Мои картинки».");
+    } else {
+      renderCats();
+      renderRows();
+    }
     document.getElementById("admin-h1").focus();
   }
 
@@ -425,6 +540,107 @@
     return wrap;
   }
 
+  /* Поле «Загрузить свою картинку»: файл превращается в data:-строку
+     и живёт прямо в каталоге — на хостинг ничего заливать не нужно. */
+  function uploadField(offer) {
+    var uid = offer.uid;
+    var id = uid + "-file";
+    var wrap = document.createElement("div");
+    wrap.className = "field-row";
+
+    var lab = document.createElement("label");
+    lab.setAttribute("for", id);
+    lab.id = id + "-lab";
+    lab.textContent = "Загрузить свою картинку";
+
+    var line = document.createElement("div");
+    line.className = "logo-up";
+
+    var ctl = document.createElement("input");
+    ctl.type = "file";
+    ctl.id = id;
+    ctl.accept = "image/png,image/jpeg,image/webp,image/svg+xml";
+    ctl.setAttribute("aria-labelledby", id + "-lab " + uid + "-title");
+    ctl.setAttribute("aria-describedby", id + "-hint " + id + "-err");
+
+    var thumb = document.createElement("span");
+    thumb.className = "logo-thumb";
+    thumb.setAttribute("aria-hidden", "true");
+    var timg = document.createElement("img");
+    timg.alt = "";
+    timg.addEventListener("error", function () { thumb.hidden = true; });
+    var tsrc = logoSrc(offer.logo);
+    if (tsrc) timg.src = tsrc;
+    else thumb.hidden = true;
+    thumb.appendChild(timg);
+
+    line.appendChild(ctl);
+    line.appendChild(thumb);
+
+    var hint = document.createElement("span");
+    hint.className = "hint";
+    hint.id = id + "-hint";
+    hint.textContent = "PNG, JPG, WebP или SVG до 4 МБ. Ужмётся до 512 px и попадёт в каталог и в список «Мои картинки».";
+
+    var err = document.createElement("span");
+    err.className = "uperr";
+    err.id = id + "-err";
+
+    /* картинка из библиотеки — селект работает для любого предложения */
+    var selLab = document.createElement("label");
+    selLab.setAttribute("for", uid + "-lib");
+    selLab.id = uid + "-lib-lab";
+    selLab.className = "lib-label";
+    selLab.textContent = "Картинка из библиотеки";
+
+    var sel = document.createElement("select");
+    sel.id = uid + "-lib";
+    sel.setAttribute("data-lib-select", "");
+    sel.setAttribute("aria-labelledby", uid + "-lib-lab " + uid + "-title");
+    sel.innerHTML = libOptions(offer.logo);
+
+    var dl = document.createElement("span");
+    dl.id = uid + "-dl";
+    dl.innerHTML = dlHTML(offer.logo);
+
+    wrap.appendChild(lab);
+    wrap.appendChild(line);
+    wrap.appendChild(hint);
+    wrap.appendChild(err);
+    wrap.appendChild(selLab);
+    wrap.appendChild(sel);
+    wrap.appendChild(dl);
+    return wrap;
+  }
+
+  /* Свою картинку вписываем в 512px на канвасе: фотографии с телефона
+     весят мегабайты, а в data.js они поедут текстом. SVG не трогаем —
+     это вектор, канвас его только испортит. */
+  function readLogoFile(file, done, fail) {
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) return fail("Файл больше 4 МБ. Сожмите картинку и попробуйте снова.");
+    if (!/^image\/(png|jpe?g|webp|svg\+xml)$/.test(file.type)) return fail("Нужна картинка: PNG, JPG, WebP или SVG.");
+
+    var fr = new FileReader();
+    fr.onerror = function () { fail("Не получилось прочитать файл."); };
+    fr.onload = function () {
+      if (file.type === "image/svg+xml") return done(fr.result);
+      var img = new Image();
+      img.onerror = function () { fail("Файл не открылся как картинка."); };
+      img.onload = function () {
+        var k = Math.min(1, 512 / Math.max(img.width, img.height));
+        var w = Math.max(1, Math.round(img.width * k));
+        var h = Math.max(1, Math.round(img.height * k));
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        done(file.type === "image/jpeg" ? c.toDataURL("image/jpeg", .85) : c.toDataURL("image/png"));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  }
+
   function buildRow(offer, index) {
     var uid = offer.uid;
     var fs = document.createElement("fieldset");
@@ -464,7 +680,9 @@
     grid.appendChild(field("Подзаголовок (продукт)", uid + "-sub", "text", offer.title, uid));
     grid.appendChild(field("Плашка (необязательно)", uid + "-badge", "text", offer.badge, uid));
     grid.appendChild(field("Логотип — путь к файлу, например assets/logos/tbank.ru.png",
-      uid + "-logo", "text", offer.logo, uid));
+      uid + "-logo", "text",
+      offer.logo && offer.logo.indexOf("data:") === 0 ? LOGO_MARK : offer.logo, uid));
+    grid.appendChild(uploadField(offer));
     grid.appendChild(field("Описание", uid + "-desc", "textarea", offer.desc, uid, "span2"));
     grid.appendChild(field("Параметры — по одному в строке, формат «Название | Значение»",
       uid + "-specs", "textarea", specsToText(offer.specs), uid, "span2"));
@@ -506,7 +724,10 @@
       o.brand = get("-brand").trim();
       o.title = get("-sub").trim();
       o.badge = get("-badge").trim();
-      o.logo  = get("-logo").trim();
+      /* Метка LOGO_MARK значит «в o.logo уже лежит загруженная картинка» —
+         затирать её текстом из поля нельзя. */
+      var logoRaw = get("-logo").trim();
+      if (logoRaw !== LOGO_MARK) o.logo = logoRaw;
       o.desc  = get("-desc").trim();
       o.url   = get("-url").trim();
       o.specs = textToSpecs(get("-specs"));
@@ -610,6 +831,97 @@
     }
   });
 
+  /* Загрузка своей картинки и выбор из библиотеки. Строку не
+     перерисовываем — фокус должен остаться на текущем поле. */
+  rowsEl.addEventListener("change", function (e) {
+    var input = e.target;
+    var fs = input.closest && input.closest(".row");
+    if (!fs) return;
+    var uid = fs.dataset.uid;
+    var o = data.offers.filter(function (x) { return x.uid === uid; })[0];
+    if (!o) return;
+
+    /* выбор картинки из библиотеки */
+    if (input.matches && input.matches("select[data-lib-select]")) {
+      var v = input.value;
+      if (v.indexOf("lib:") === 0 && !libFind(v.slice(4))) return;  // «(нет в библиотеке)» — не трогаем
+      o.logo = v;
+      var pIn = document.getElementById(uid + "-logo");
+      if (pIn) pIn.value = v;
+      var th = fs.querySelector(".logo-thumb");
+      if (th) {
+        var src = logoSrc(v);
+        th.hidden = !src;
+        if (src) th.querySelector("img").src = src;
+      }
+      var dlEl = document.getElementById(uid + "-dl");
+      if (dlEl) dlEl.innerHTML = dlHTML(v);
+      say(v ? "Выбрана картинка из библиотеки." : "Картинка убрана.");
+      return;
+    }
+
+    if (!input.matches || !input.matches('input[type="file"]')) return;
+
+    var err = document.getElementById(uid + "-file-err");
+    err.textContent = "";
+    input.removeAttribute("aria-invalid");
+
+    var srcFile = input.files && input.files[0];
+    readLogoFile(srcFile, function (dataUrl) {
+      data.library = Array.isArray(data.library) ? data.library : [];
+      var base = (srcFile.name || "картинка").replace(/\.[^.]+$/, "").slice(0, 40) || "картинка";
+      var name = base, n = 2;
+      while (libFind(name)) name = base + "-" + (n++);   // имена в списке должны различаться
+      data.library.push({
+        name: name,
+        ext: srcFile.type === "image/svg+xml" ? "svg" : srcFile.type === "image/jpeg" ? "jpg" : "png",
+        data: dataUrl
+      });
+
+      o.logo = "lib:" + name;
+      var pathInput = document.getElementById(uid + "-logo");
+      if (pathInput) pathInput.value = "lib:" + name;
+      var thumb = fs.querySelector(".logo-thumb");
+      if (thumb) {
+        thumb.hidden = false;
+        thumb.querySelector("img").src = dataUrl;
+      }
+      refreshLibSelects();
+      var dlWrap = document.getElementById(uid + "-dl");
+      if (dlWrap) dlWrap.innerHTML = dlHTML(o.logo);
+      say("Картинка добавлена в библиотеку и выбрана.");
+    }, function (msg) {
+      err.textContent = msg;
+      input.setAttribute("aria-invalid", "true");
+      input.value = "";
+      say(msg);
+    });
+  });
+
+  /* Поле пути и селект библиотеки не должны противоречить друг другу:
+     набранный руками путь сразу отражается в селекте, миниатюре и ссылке. */
+  rowsEl.addEventListener("input", function (e) {
+    var t = e.target;
+    if (!t.matches || !t.matches('input[type="text"]')) return;
+    var fs = t.closest(".row");
+    if (!fs || t.id !== fs.dataset.uid + "-logo") return;
+    var uid = fs.dataset.uid;
+    var v = t.value.trim();
+    if (v === LOGO_MARK) return;
+    var o = data.offers.filter(function (x) { return x.uid === uid; })[0];
+    if (o) o.logo = v;
+    var sel = document.getElementById(uid + "-lib");
+    if (sel && !sel.contains(document.activeElement)) sel.innerHTML = libOptions(v);
+    var th = fs.querySelector(".logo-thumb");
+    if (th) {
+      var src = logoSrc(v);
+      th.hidden = !src;
+      if (src) th.querySelector("img").src = src;
+    }
+    var dlEl = document.getElementById(uid + "-dl");
+    if (dlEl) dlEl.innerHTML = dlHTML(v);
+  });
+
   /* ================= добавление ================= */
 
   document.getElementById("btn-add").addEventListener("click", function () {
@@ -667,7 +979,7 @@
 
     saveBtn.disabled = true;
     saveBtn.textContent = "Сохраняю…";
-    api("save", { data: { updated: data.updated, cats: data.cats, offers: data.offers } })
+    api("save", { data: { updated: data.updated, cats: data.cats, offers: data.offers, library: data.library || [] } })
       .then(function (r) {
         saveBtn.disabled = false;
         saveBtn.textContent = "Сохранить и опубликовать";
@@ -711,7 +1023,7 @@
       "   Залейте его на хостинг вместо старого data.js. */",
       "",
       "window.SITE_DATA = " + JSON.stringify(
-        { updated: data.updated || stamp(), cats: data.cats, offers: data.offers }, null, 2) + ";",
+        { updated: data.updated || stamp(), cats: data.cats, offers: data.offers, library: data.library || [] }, null, 2) + ";",
       ""
     ].join("\n");
   }
@@ -739,6 +1051,7 @@
         if (!parsed || !Array.isArray(parsed.offers)) throw new Error("нет списка offers");
         if (!Array.isArray(parsed.cats) || !parsed.cats.length) parsed.cats = baseData().cats;
         data = parsed;
+        migrateLogos();
         renderCats();
         renderRows();
         alertClear("admin-alert");
@@ -764,6 +1077,7 @@
       onOk: function () {
         try { localStorage.removeItem(STORE_KEY); } catch (e) {}
         data = baseData();
+        migrateLogos();
         renderCats();
         renderRows();
         savedMark.textContent = "";

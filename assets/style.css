@@ -319,7 +319,7 @@ h2[id] { scroll-margin-top: calc(var(--bar-h) + 22px); }
 }
 .cat-tile:hover { transform: translateY(-3px); box-shadow: var(--sh-2); }
 .cat-tile__num { font-size: 32px; font-weight: 800; letter-spacing: -.045em; line-height: 1.1; }
-.cat-tile__word { font-size: 13px; color: var(--muted); }
+.cat-tile__word { font-size: 13px; color: #5e6369; } /* темнее --muted: на пастельных плитках нужен контраст 4.5:1 */
 /* справа снизу висит кружок со стрелкой — оставляем ему место */
 .cat-tile__name { margin-top: auto; padding-right: 42px; font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
 .cat-tile__go {
