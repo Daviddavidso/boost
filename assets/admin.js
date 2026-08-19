@@ -94,6 +94,52 @@
     return logo;   // обычный путь вида assets/logos/x.png
   }
 
+  /* ================= пресеты логотипов ================= */
+
+  /* Готовые логотипы банков и МФО. Файлы лежат в assets/logos/ под именем
+     «домен.png» — путь попадает в offer.logo как обычный путь к файлу. */
+  var LOGO_URL_VALUE = "__url__";
+
+  var PRESET_BANKS = [
+    ["Сбербанк", "sberbank.ru"], ["Т-Банк", "tbank.ru"], ["Альфа-Банк", "alfabank.ru"],
+    ["ВТБ", "vtb.ru"], ["Газпромбанк", "gazprombank.ru"], ["Совкомбанк", "sovcombank.ru"],
+    ["Халва", "halvacard.ru"], ["Райффайзен Банк", "raiffeisen.ru"], ["ПСБ", "psbank.ru"],
+    ["Уралсиб", "uralsib.ru"], ["ОТП Банк", "otpbank.ru"], ["Почта Банк", "pochtabank.ru"],
+    ["МТС Банк", "mtsbank.ru"], ["УБРиР", "ubrr.ru"], ["Ак Барс Банк", "akbars.ru"],
+    ["Локо-Банк", "lockobank.ru"], ["Ozon Банк", "ozon.ru"], ["Ренессанс Банк", "rencredit.ru"],
+    ["Точка", "tochka.com"], ["Модульбанк", "modulbank.ru"],
+    ["Банк Санкт-Петербург", "bspb.ru"], ["Банк Левобережный", "nskbl.ru"],
+    ["Россельхозбанк", "rshb.ru"], ["Банк Зенит", "zenit.ru"]
+  ];
+
+  var PRESET_MFO = [
+    ["Займер", "zaymer.ru"], ["MoneyMan", "moneyman.ru"], ["еКапуста", "ekapusta.com"],
+    ["Лайм-Займ", "lime-zaim.ru"], ["Веб-займ", "web-zaim.ru"], ["Быстроденьги", "bistrodengi.ru"],
+    ["До Зарплаты", "dozarplati.com"], ["МигКредит", "migcredit.ru"], ["Турбозайм", "turbozaim.ru"],
+    ["CarMoney", "carmoney.ru"], ["Веббанкир", "webbankir.com"], ["Платиза", "platiza.ru"]
+  ];
+
+  function presetPath(domain) { return "assets/logos/" + domain + ".png"; }
+
+  function isHttpUrl(s) { return /^https?:\/\//i.test(String(s == null ? "" : s)); }
+
+  function presetByPath(logo) {
+    var all = PRESET_BANKS.concat(PRESET_MFO);
+    for (var i = 0; i < all.length; i++) if (presetPath(all[i][1]) === logo) return all[i];
+    return null;
+  }
+
+  /* Группа пресетов для селекта: названия по алфавиту, текст — только имя
+     банка, значение — путь к файлу. */
+  function presetGroup(label, list, logo) {
+    var items = list.slice().sort(function (a, b) { return a[0].localeCompare(b[0], "ru"); });
+    return '<optgroup label="' + esc(label) + '">' + items.map(function (p) {
+      var v = presetPath(p[1]);
+      return '<option value="' + esc(v) + '"' + (v === logo ? " selected" : "") + ">" +
+             esc(p[0]) + "</option>";
+    }).join("") + "</optgroup>";
+  }
+
   function extFromDataUrl(u) {
     if (/^data:image\/jpe?g/.test(u)) return "jpg";
     if (/^data:image\/svg/.test(u)) return "svg";
@@ -114,10 +160,15 @@
                esc(it.name) + "</option>";
       }).join("") + "</optgroup>";
     }
+    html += presetGroup("Банки", PRESET_BANKS, logo);
+    html += presetGroup("МФО", PRESET_MFO, logo);
+    html += '<option value="' + LOGO_URL_VALUE + '"' + (isHttpUrl(logo) ? " selected" : "") +
+            ">По ссылке из интернета…</option>";
     if (logo && logo.indexOf("lib:") === 0 && !libFind(logo.slice(4))) {
       html += '<option value="' + esc(logo) + '" selected>' + esc(logo.slice(4)) + " (нет в библиотеке)</option>";
     }
-    if (logo && logo.indexOf("lib:") !== 0 && logo.indexOf("data:") !== 0) {
+    if (logo && logo.indexOf("lib:") !== 0 && logo.indexOf("data:") !== 0 &&
+        !presetByPath(logo) && !isHttpUrl(logo)) {
       html += '<option value="' + esc(logo) + '" selected>файл: ' + esc(logo.replace(/^.*\//, "")) + "</option>";
     }
     if (logo && logo.indexOf("data:") === 0) {
@@ -599,6 +650,40 @@
     sel.setAttribute("aria-labelledby", uid + "-lib-lab " + uid + "-title");
     sel.innerHTML = libOptions(offer.logo);
 
+    /* поле «Ссылка на картинку» — показывается пунктом «По ссылке из интернета…» */
+    var urlWrap = document.createElement("div");
+    urlWrap.className = "logo-url";
+    urlWrap.id = uid + "-logourl-wrap";
+    urlWrap.hidden = !isHttpUrl(offer.logo);
+
+    var urlLab = document.createElement("label");
+    urlLab.setAttribute("for", uid + "-logourl");
+    urlLab.id = uid + "-logourl-lab";
+    urlLab.textContent = "Ссылка на картинку";
+
+    var urlIn = document.createElement("input");
+    urlIn.type = "url";
+    urlIn.id = uid + "-logourl";
+    urlIn.placeholder = "https://";
+    urlIn.value = isHttpUrl(offer.logo) ? offer.logo : "";
+    urlIn.setAttribute("data-logo-url", "");
+    urlIn.setAttribute("aria-labelledby", uid + "-logourl-lab " + uid + "-title");
+    urlIn.setAttribute("aria-describedby", uid + "-logourl-hint " + uid + "-logourl-err");
+
+    var urlHint = document.createElement("span");
+    urlHint.className = "hint";
+    urlHint.id = uid + "-logourl-hint";
+    urlHint.textContent = "Вставьте прямую ссылку на картинку — png, jpg или svg.";
+
+    var urlErr = document.createElement("span");
+    urlErr.className = "uperr";
+    urlErr.id = uid + "-logourl-err";
+
+    urlWrap.appendChild(urlLab);
+    urlWrap.appendChild(urlIn);
+    urlWrap.appendChild(urlHint);
+    urlWrap.appendChild(urlErr);
+
     var dl = document.createElement("span");
     dl.id = uid + "-dl";
     dl.innerHTML = dlHTML(offer.logo);
@@ -609,8 +694,54 @@
     wrap.appendChild(err);
     wrap.appendChild(selLab);
     wrap.appendChild(sel);
+    wrap.appendChild(urlWrap);
     wrap.appendChild(dl);
     return wrap;
+  }
+
+  /* Показ и скрытие поля ссылки. Автофокуса при показе нет; если фокус
+     оказался внутри при скрытии — возвращаем его на селект. */
+  function toggleLogoUrl(uid, show) {
+    var urlWrap = document.getElementById(uid + "-logourl-wrap");
+    if (!urlWrap) return;
+    if (!show && urlWrap.contains(document.activeElement)) {
+      var sel = document.getElementById(uid + "-lib");
+      if (sel) sel.focus();
+    }
+    urlWrap.hidden = !show;
+  }
+
+  /* Ссылка на картинку введена руками: обновляем каталог, поле пути,
+     миниатюру и ссылку скачивания — так же, как выбор из библиотеки. */
+  function applyLogoUrl(input, announce) {
+    var fs = input.closest(".row");
+    if (!fs) return;
+    var uid = fs.dataset.uid;
+    var o = data.offers.filter(function (x) { return x.uid === uid; })[0];
+    var err = document.getElementById(uid + "-logourl-err");
+    var v = input.value.trim();
+    if (v && !isHttpUrl(v)) {
+      input.setAttribute("aria-invalid", "true");
+      if (err) err.textContent = "Ссылка должна начинаться с http:// или https://";
+      if (announce) say("Ссылка должна начинаться с http:// или https://");
+      return;
+    }
+    input.removeAttribute("aria-invalid");
+    if (err) err.textContent = "";
+    if (!v) return;
+    if (o) o.logo = v;
+    var pIn = document.getElementById(uid + "-logo");
+    if (pIn) pIn.value = v;
+    var th = fs.querySelector(".logo-thumb");
+    if (th) {
+      th.hidden = false;
+      th.querySelector("img").src = v;
+    }
+    var sel = document.getElementById(uid + "-lib");
+    if (sel && !sel.contains(document.activeElement)) sel.innerHTML = libOptions(v);
+    var dlEl = document.getElementById(uid + "-dl");
+    if (dlEl) dlEl.innerHTML = dlHTML(v);
+    if (announce) say("Картинка по ссылке выбрана.");
   }
 
   /* Свою картинку вписываем в 512px на канвасе: фотографии с телефона
@@ -841,10 +972,16 @@
     var o = data.offers.filter(function (x) { return x.uid === uid; })[0];
     if (!o) return;
 
-    /* выбор картинки из библиотеки */
+    /* выбор картинки из библиотеки или пресета */
     if (input.matches && input.matches("select[data-lib-select]")) {
       var v = input.value;
+      if (v === LOGO_URL_VALUE) {
+        toggleLogoUrl(uid, true);
+        say("Выбран ввод ссылки. Вставьте адрес картинки в поле «Ссылка на картинку».");
+        return;
+      }
       if (v.indexOf("lib:") === 0 && !libFind(v.slice(4))) return;  // «(нет в библиотеке)» — не трогаем
+      toggleLogoUrl(uid, false);
       o.logo = v;
       var pIn = document.getElementById(uid + "-logo");
       if (pIn) pIn.value = v;
@@ -856,7 +993,15 @@
       }
       var dlEl = document.getElementById(uid + "-dl");
       if (dlEl) dlEl.innerHTML = dlHTML(v);
-      say(v ? "Выбрана картинка из библиотеки." : "Картинка убрана.");
+      var preset = presetByPath(v);
+      say(preset ? "Выбран логотип «" + preset[0] + "»."
+                 : v ? "Выбрана картинка из библиотеки." : "Картинка убрана.");
+      return;
+    }
+
+    /* ссылка на картинку — окончательное значение */
+    if (input.matches && input.matches("input[data-logo-url]")) {
+      applyLogoUrl(input, true);
       return;
     }
 
@@ -879,6 +1024,7 @@
       });
 
       o.logo = "lib:" + name;
+      toggleLogoUrl(uid, false);
       var pathInput = document.getElementById(uid + "-logo");
       if (pathInput) pathInput.value = "lib:" + name;
       var thumb = fs.querySelector(".logo-thumb");
@@ -902,6 +1048,7 @@
      набранный руками путь сразу отражается в селекте, миниатюре и ссылке. */
   rowsEl.addEventListener("input", function (e) {
     var t = e.target;
+    if (t.matches && t.matches("input[data-logo-url]")) { applyLogoUrl(t, false); return; }
     if (!t.matches || !t.matches('input[type="text"]')) return;
     var fs = t.closest(".row");
     if (!fs || t.id !== fs.dataset.uid + "-logo") return;
@@ -912,6 +1059,20 @@
     if (o) o.logo = v;
     var sel = document.getElementById(uid + "-lib");
     if (sel && !sel.contains(document.activeElement)) sel.innerHTML = libOptions(v);
+    /* набранный руками http(s)-адрес открывает и заполняет поле ссылки */
+    var urlWrap = document.getElementById(uid + "-logourl-wrap");
+    if (urlWrap) {
+      var urlIn = document.getElementById(uid + "-logourl");
+      if (isHttpUrl(v)) {
+        urlWrap.hidden = false;
+        if (urlIn && urlIn !== document.activeElement) urlIn.value = v;
+      } else if (!urlWrap.contains(document.activeElement)) {
+        urlWrap.hidden = true;
+        if (urlIn) { urlIn.value = ""; urlIn.removeAttribute("aria-invalid"); }
+        var uErr = document.getElementById(uid + "-logourl-err");
+        if (uErr) uErr.textContent = "";
+      }
+    }
     var th = fs.querySelector(".logo-thumb");
     if (th) {
       var src = logoSrc(v);

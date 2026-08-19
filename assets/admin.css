@@ -85,6 +85,14 @@ body.admin { background: var(--bg); }
 
 /* библиотека картинок */
 .lib-label { margin-top: 10px; }
+
+/* поле «Ссылка на картинку» (пункт «По ссылке из интернета…») */
+.logo-url { display: grid; gap: 7px; margin-top: 10px; }
+.logo-url > label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
 .dl {
   display: inline-block;
   margin-top: 8px;
