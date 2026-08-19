@@ -94,11 +94,24 @@ else
   echo "    второй — пароль от админки. Панель работает как черновик в браузере."
 fi
 
-for f in index.html data.js .htaccess; do
+# ВНИМАНИЕ ПРО data.js. Каталог на боевом правит клиент через админку, и там
+# он новее нашей локальной копии. Обычная заливка его НЕ трогает — иначе
+# правки клиента молча затрутся. Залить каталог принудительно:
+#   bash deploy.sh --with-data
+WITH_DATA=""
+if [ "${1:-}" = "--with-data" ]; then WITH_DATA="data.js"; fi
+
+for f in index.html .htaccess $WITH_DATA; do
   put "$f" "$f"
 done
 
-[ "$PHP_LIVE" = "1" ] && put "api.php" "api.php"
+if [ "$PHP_LIVE" = "1" ]; then
+  put "api.php" "api.php"
+  # data.php отдаёт каталог мимо кеша nginx, check.php — страница
+  # самопроверки для клиента. Без PHP оба файла бесполезны.
+  put "data.php" "data.php"
+  put "check.php" "check.php"
+fi
 
 # Панель уезжает на сервер под именем panel.html: reg.ru заворачивает любой
 # путь со словом "admin" в антибот-проверку и /admin.html уходит в вечный

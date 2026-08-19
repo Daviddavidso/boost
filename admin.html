@@ -158,7 +158,11 @@
   </form>
 </dialog>
 
-<script src="data.js?v=6"></script>
+<!-- Каталог грузится через PHP: так правки из админки видны сразу,
+     а не через 45 суток, пока держится кеш nginx на .js файлах.
+     Если PHP на хостинге нет, ниже подхватывается обычный data.js. -->
+<script src="data.php"></script>
+<script>if(typeof SITE_DATA==="undefined"){document.write('<script src="data.js"><\/script>');}</script>
 <script src="assets/admin.js?v=6"></script>
 </body>
 </html>

@@ -29,3 +29,17 @@ DirectoryIndex index.html
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
 </IfModule>
+
+# data.php отдаёт каталог сам и ставит свои заголовки кеша: браузер обязан
+# каждый раз спрашивать сервер, не менялся ли каталог. Без этой врезки
+# mod_expires добавляет к нему второй Cache-Control (по типу javascript,
+# на неделю вперёд), и заголовки начинают спорить между собой.
+<FilesMatch "^(data|check)\.php$">
+  <IfModule mod_expires.c>
+    ExpiresActive Off
+  </IfModule>
+  <IfModule mod_headers.c>
+    Header unset Expires
+    Header set Cache-Control "no-cache, must-revalidate"
+  </IfModule>
+</FilesMatch>
